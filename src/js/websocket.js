@@ -1,8 +1,8 @@
 const WebSocket = require('ws');
+const { ipcRenderer } = require('electron');
 
 class WSService {
-    constructor(mainWindow) {
-        this.mainWindow = mainWindow;
+    constructor() {
         this.ws = null;
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
@@ -97,12 +97,10 @@ class WSService {
     }
 
     sendToRenderer(channel, data) {
-        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            try {
-                this.mainWindow.webContents.send(channel, data);
-            } catch (error) {
-                console.error('Failed to send message to renderer:', error);
-            }
+        try {
+            ipcRenderer.send('ws-message-to-main', { channel, data });
+        } catch (error) {
+            console.error('Failed to send message via IPC:', error);
         }
     }
 

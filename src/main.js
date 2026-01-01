@@ -50,20 +50,18 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow();
-    dataService = new WSService(mainWindow);
 
-    // Initialize waveform visualizer when window is ready
     mainWindow.webContents.once('did-finish-load', () => {
         initializeWaveformVisualizer();
     });
 
-    // Handle station change requests from renderer
     ipcMain.handle('set-station', (event, stationId) => {
-        if (dataService && typeof dataService.setStation === 'function') {
-            dataService.setStation(stationId);
-            return true;
-        }
-        return false;
+        mainWindow.webContents.send('set-station-request', stationId);
+        return true;
+    });
+
+    ipcMain.on('ws-message-to-main', (event, { channel, data }) => {
+        mainWindow.webContents.send(channel, data);
     });
 });
 

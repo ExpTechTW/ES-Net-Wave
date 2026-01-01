@@ -1,9 +1,13 @@
 const WaveformVisualizer = require('../js/visualization/waveform');
+const WSService = require('../js/websocket');
 const { ipcRenderer } = require('electron');
+
+let wsService;
 
 function initializeApplication() {
     try {
-        // Create waveform visualizer instance and initialize
+        wsService = new WSService();
+
         window.waveformVisualizer = new WaveformVisualizer();
         window.waveformVisualizer.initialize();
     } catch (error) {
@@ -23,6 +27,15 @@ window.addEventListener('beforeunload', () => {
     if (window.waveformVisualizer) {
         window.waveformVisualizer.destroy();
         window.waveformVisualizer = null;
+    }
+    if (wsService) {
+        wsService = null;
+    }
+});
+
+ipcRenderer.on('set-station-request', (event, stationId) => {
+    if (wsService && typeof wsService.setStation === 'function') {
+        wsService.setStation(stationId);
     }
 });
 

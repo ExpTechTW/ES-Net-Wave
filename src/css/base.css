@@ -1,0 +1,49 @@
+* {
+    user-select: none;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#widget-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #050505;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: row-reverse;
+    min-width: 300px;
+    min-height: 150px;
+}
+
+#chart-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #111;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.wave-canvas:not(:last-child) {
+    border-bottom: 1px solid #333;
+}
+
+.time-axis-canvas {
+    border-top: 1px solid #333;
+    background: #0a0a0a;
+}

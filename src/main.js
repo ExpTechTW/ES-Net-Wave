@@ -13,7 +13,7 @@ function initializeWaveformVisualizer() {
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        title: 'ES-Net-Wave',
+        title: `ES-Net-Wave v${app.getVersion()}`,
         width: 828,
         height: 628,
         resizable: false,

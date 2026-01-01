@@ -4,7 +4,8 @@ const WAVEFORM_CONSTANTS = {
         GRID_LINES: 6,
         TIME_INTERVAL: 10,
         SAMPLE_RATE: 0.02,
-        MARGIN: 20
+        MARGIN: 20,
+        DEFAULT_SCALE: 1.0
     },
     DATA: {
         BUFFER_SIZE: 6000,

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div id="widget-container">
+        <div id="chart-area">
+            <div id="wave-canvases">
+                <canvas id="waveform-x" class="wave-canvas"></canvas>
+                <canvas id="waveform-y" class="wave-canvas"></canvas>
+                <canvas id="waveform-z" class="wave-canvas"></canvas>
+                <canvas id="time-axis" class="time-axis-canvas"></canvas>
+            </div>
+        </div>
+        <div id="info-area">
+            <!-- Default cards (shown when no station selected) -->
+            <div id="default-cards">
+                <div class="card" id="card-status">
+                    <div class="value" id="val-status">🔴 Disconnected</div>
+                </div>
+                <div class="card" id="card-station">
+                    <div class="value" id="val-station">E-310-17E83F8</div>
+                </div>
+                <!-- Station Selection List -->
+                <div id="station-selection" class="station-selection">
+                    <div id="station-list" class="station-list">
+                        <!-- Stations will be populated here -->
+                    </div>
+                </div>
+                <div class="card" id="card-area">
+                    <div class="value" id="val-area">新竹縣 竹東鎮</div>
+                </div>
+                <div class="card" id="card-int">
+                    <div class="label">Intensity</div>
+                    <div class="value" id="val-int">----</div>
+                </div>
+                <div class="card" id="card-int-level">
+                    <div class="label">Intensity Level</div>
+                    <div class="value" id="val-int-level">--</div>
+                </div>
+                <div class="card" id="card-pga">
+                    <div class="label">PGA</div>
+                    <div class="value" id="val-pga">----</div>
+                </div>
+                <div class="card" id="card-time">
+                    <div class="value" id="val-time">----/--/--<br>--:--:--</div>
+                </div>
+            </div>
+
+            <!-- Selected station card (shown when station is selected) -->
+            <div id="selected-station-card" class="card selected-station-card" style="display: none;">
+                <div class="label">測站</div>
+                <div class="value" id="selected-station-info">選擇測站中...</div>
+            </div>
+        </div>
+        <!-- <script src="../js/constants.js"></script> -->
+        <script src="../js/index.js"></script>
+        <!-- <script src="../js/visualization/waveform.js"></script> -->
+    </div>
+</body>
+
+</html>

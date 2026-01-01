@@ -1,0 +1,225 @@
+* {
+    user-select: none;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#widget-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #050505;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: row-reverse;
+    min-width: 300px;
+    min-height: 150px;
+}
+
+#chart-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #111;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.wave-canvas:not(:last-child) {
+    border-bottom: 1px solid #333;
+}
+
+.time-axis-canvas {
+    border-top: 1px solid #333;
+    background: #0a0a0a;
+}
+
+#info-area {
+    width: 150px;
+    background: #111;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+#default-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 4px;
+    min-height: 0;
+}
+
+.label {
+    font-size: 0.9rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    margin-top: 0;
+    align-self: flex-start;
+    width: 100%;
+    text-align: center;
+}
+
+.value {
+    font-weight: bold;
+    font-family: 'Consolas', monospace;
+    color: #fff;
+    font-size: clamp(1.5rem, 4vh, 3rem);
+    text-align: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#card-station {
+    flex: 0 0 20px;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#val-station {
+    font-size: 18px;
+}
+
+#card-status {
+    flex: 0 0 20px;
+    justify-content: center;
+}
+
+#val-status {
+    font-size: 16px;
+}
+
+#card-time {
+    flex: 0 0 40px;
+    justify-content: center;
+}
+
+#val-time {
+    font-size: 20px;
+}
+
+#card-area {
+    flex: 0 0 20px;
+    justify-content: center;
+}
+#val-area {
+    font-family: 'Segoe UI', 'SF Pro Rounded', sans-serif;
+    font-size: 18px;
+}
+
+/* Selected Station Card */
+.selected-station-card {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.selected-station-card:hover {
+    background: #2a2a2a;
+    border-color: #555;
+}
+
+.selected-station-card .label {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.selected-station-card .value {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    word-break: break-all;
+}
+
+/* Station Selection Styles */
+.station-selection {
+    display: none;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.station-selection.show {
+    display: block;
+}
+
+.station-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+    height: 100%;
+    overflow: visible;
+}
+
+.station-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.station-card:hover {
+    background: #2a2a2a;
+    border-color: #555;
+    transform: translateY(-1px);
+}
+
+.station-card-id {
+    font-weight: bold;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    color: #00ff88;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.station-card-location {
+    font-size: 12px;
+    color: #ccc;
+    text-align: center;
+}

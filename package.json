@@ -1,0 +1,13 @@
+{
+    "name": "es-wave",
+    "version": "1.0.0",
+    "description": "Earthquake wave monitor Electron app",
+    "main": "src/main.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "dependencies": {
+        "electron": "^25.0.0",
+        "ws": "^8.13.0"
+    }
+}

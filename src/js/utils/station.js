@@ -81,7 +81,7 @@ class StationManager {
                 for (const [townKey, townData] of Object.entries(cityData)) {
                     if (townKey !== 'code' && townData.code === townCode) {
                         // console.log('Found match:', cityKey, townKey, 'for code:', townCode);
-                        return `${cityKey}${townKey}`;
+                        return `${cityKey} ${townKey}`;
                     }
                 }
             }

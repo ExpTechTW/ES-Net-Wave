@@ -159,26 +159,23 @@ class StationSelector {
         if (cityStationsContainer && cityHeader) {
             const isExpanded = cityStationsContainer.classList.contains('expanded');
 
-            // Add animation class to all city containers for synchronized animation
-            const allCityContainers = document.querySelectorAll('.city-stations');
-            allCityContainers.forEach(container => {
-                container.classList.add('animating');
-            });
-
             if (isExpanded) {
                 cityStationsContainer.classList.remove('expanded');
                 cityHeader.classList.remove('expanded');
             } else {
+                const allExpandedCities = document.querySelectorAll('.city-stations.expanded');
+                const allExpandedHeaders = document.querySelectorAll('.city-header.expanded');
+
+                allExpandedCities.forEach(container => {
+                    container.classList.remove('expanded');
+                });
+                allExpandedHeaders.forEach(header => {
+                    header.classList.remove('expanded');
+                });
+
                 cityStationsContainer.classList.add('expanded');
                 cityHeader.classList.add('expanded');
             }
-
-            // Remove animation class after animation completes
-            setTimeout(() => {
-                allCityContainers.forEach(container => {
-                    container.classList.remove('animating');
-                });
-            }, 300);
         }
     }
 

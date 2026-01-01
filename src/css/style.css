@@ -140,7 +140,6 @@ canvas {
     font-size: 18px;
 }
 
-/* Selected Station Card */
 .selected-station-card {
     flex: 1;
     background: #1a1a1a;
@@ -172,7 +171,6 @@ canvas {
     word-break: break-all;
 }
 
-/* Station Selection Styles */
 .station-selection {
     display: none;
     position: absolute;
@@ -180,46 +178,34 @@ canvas {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+    background: #111;
     z-index: 10;
     border-radius: 6px;
     border: 1px solid #333;
     overflow: hidden;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
 }
 
 .station-selection.show {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 .station-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 8px;
-    height: 100%;
+    padding: 5px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: #555 #222;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .station-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.station-list::-webkit-scrollbar-track {
-    background: #222;
-    border-radius: 3px;
-}
-
-.station-list::-webkit-scrollbar-thumb {
-    background: #555;
-    border-radius: 3px;
-}
-
-.station-list::-webkit-scrollbar-thumb:hover {
-    background: #777;
+    display: none;
 }
 
 .station-card {
@@ -254,149 +240,108 @@ canvas {
     text-align: center;
 }
 
-/* City grouping styles */
 .city-header {
-    background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+    background: #1a1a1a;
     border: 1px solid #333;
-    border-radius: 8px;
-    padding: 10px 15px;
-    margin-bottom: 3px;
+    border-radius: 6px;
+    padding: 12px 18px;
+    margin-bottom: 4px;
     cursor: pointer;
     color: #fff;
     font-weight: bold;
     font-size: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     position: relative;
-    overflow: hidden;
-}
-
-.city-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.5s;
-}
-
-.city-header:hover::before {
-    left: 100%;
 }
 
 .city-header:hover {
-    background: linear-gradient(135deg, #2a2a2a 0%, #353535 100%);
+    background: #2a2a2a;
     border-color: #555;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    transform: translateY(-2px);
 }
 
 .city-header.expanded {
-    background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
-    border-color: #666;
+    background: #2a2a2a;
+    border-color: #555;
 }
 
 .city-header.expanded::after {
     content: '▼';
     position: absolute;
-    right: 10px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 12px;
-    color: #00ff88;
-    transition: transform 0.3s ease;
+    font-size: 14px;
+    color: #fff;
 }
 
 .city-header:not(.expanded)::after {
     content: '▶';
-    transform: translateY(-50%) rotate(0deg);
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #fff;
 }
 
 .city-stations {
-    display: none;
+    display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 2px;
+    margin-bottom: 4px;
     max-height: 0;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 6px;
+    padding: 0 4px;
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 .city-stations.expanded {
-    display: flex;
-    max-height: 500px;
-    animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 300px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-        max-height: 0;
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-        max-height: 500px;
-    }
+.city-stations.expanded::-webkit-scrollbar {
+    display: none;
 }
 
 .station-item {
-    background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
+    background: #1a1a1a;
     border: 1px solid #333;
-    border-radius: 8px;
-    padding: 10px 8px;
+    border-radius: 6px;
+    padding: 12px 10px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.station-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 136, 0.05) 50%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.station-item:hover::before {
-    opacity: 1;
+    gap: 4px;
 }
 
 .station-item:hover {
-    background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+    background: #2a2a2a;
     border-color: #555;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-    transform: translateY(-3px) scale(1.02);
 }
 
 .station-item.selected {
-    background: linear-gradient(135deg, #003300 0%, #006600 100%);
-    border-color: #00ff88;
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+    background: #2a2a2a;
+    border-color: #555;
 }
 
 .station-item.selected::after {
     content: '●';
     position: absolute;
-    top: 5px;
-    right: 8px;
-    color: #00ff88;
-    font-size: 10px;
-    text-shadow: 0 0 5px rgba(0, 255, 136, 0.8);
+    top: 8px;
+    right: 10px;
+    color: #fff;
+    font-size: 12px;
 }
 
 .station-id {
@@ -405,23 +350,10 @@ canvas {
     color: #fff;
     font-weight: bold;
     text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    transition: color 0.3s ease;
-}
-
-.station-item:hover .station-id {
-    color: #00ff88;
 }
 
 .station-location {
     font-size: 11px;
     color: #ccc;
     text-align: center;
-    opacity: 0.8;
-    transition: all 0.3s ease;
-}
-
-.station-item:hover .station-location {
-    color: #ddd;
-    opacity: 1;
 }

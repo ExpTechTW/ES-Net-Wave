@@ -23,7 +23,9 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false,
             enableRemoteModule: false,
-            zoomFactor: 1.0
+            zoomFactor: 1.0,
+            backgroundThrottling: false,
+            offscreen: false
         },
     });
     mainWindow.setMenu(null);

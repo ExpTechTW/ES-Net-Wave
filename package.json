@@ -1,10 +1,15 @@
 {
-    "name": "es-wave",
-    "version": "1.0.0",
-    "description": "Earthquake wave monitor Electron app",
+    "name": "es-net-wave",
+    "version": "1.0.0-beta.1",
+    "description": "ES-Net-Wave",
+    "author": "ExpTech Studio <ExpTech.tw@gmail.com>",
     "main": "src/main.js",
     "scripts": {
         "start": "electron ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ExpTechTW/ES-Net-Wave.git"
     },
     "dependencies": {
         "electron": "^25.0.0",

@@ -86,7 +86,6 @@ class StationManager {
                 }
             }
 
-            console.log('No match found for code:', townCode);
             return "未知地區";
         } catch (error) {
             console.error('Error parsing location:', error, code);
@@ -123,8 +122,6 @@ class StationManager {
                 city = cityMatch[1]; // The city part
             }
 
-            console.log(`Station ${station.id}: location="${station.location}" -> city="${city}"`);
-
             if (!grouped[city]) {
                 grouped[city] = [];
             }
@@ -149,7 +146,6 @@ class StationManager {
             });
         });
 
-        console.log('ES-Net stations grouped by city (sorted by area code):', sortedGrouped);
         return sortedGrouped;
     }
 
@@ -176,11 +172,8 @@ class StationManager {
                 }
             }
 
-            console.log(`Station ${station.id}: location="${station.location}" -> town="${town}"`);
-
             // Fallback: if no pattern matches, use the whole location
             if (town === station.location) {
-                console.log(`Could not parse town from location: "${station.location}"`);
             }
 
             if (!grouped[town]) {
@@ -207,7 +200,6 @@ class StationManager {
             });
         });
 
-        console.log('ES-Net stations grouped by town (sorted by area code):', sortedGrouped);
         return sortedGrouped;
     }
 

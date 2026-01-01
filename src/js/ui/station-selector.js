@@ -15,10 +15,8 @@ class StationSelector {
         if (this.isInitialized) return;
 
         try {
-            console.log('Initializing station selector...');
 
             // Pre-load station data on app startup and cache it locally
-            console.log('Pre-loading station data for local cache...');
             await this.stationManager.loadStations();
 
             // Set initial selected station from saved preference
@@ -32,7 +30,6 @@ class StationSelector {
             this.setupEventHandlers();
 
             this.isInitialized = true;
-            console.log('Station selector initialized successfully with cached data');
 
         } catch (error) {
             console.error('Failed to initialize station selector:', error);
@@ -43,7 +40,6 @@ class StationSelector {
     createStationList() {
         // Only create if not already created
         if (this.stationListCreated) {
-            console.log('Station list already created, skipping...');
             return;
         }
 
@@ -52,8 +48,6 @@ class StationSelector {
             console.error('station-list element not found');
             return;
         }
-
-        console.log('Creating station list with grouped stations');
 
         // Clear existing content
         stationList.innerHTML = '';
@@ -116,7 +110,6 @@ class StationSelector {
         this.setupEventDelegation();
 
         this.stationListCreated = true;
-        console.log('Grouped station list created');
     }
 
     // Setup event delegation for better memory management
@@ -190,8 +183,6 @@ class StationSelector {
             return;
         }
 
-        console.log('Setting up station selector event handlers');
-
         // Station card click handler
         stationCard.addEventListener('click', () => {
             this.toggleStationSelection();
@@ -229,7 +220,6 @@ class StationSelector {
             defaultCards.style.display = 'none';
             if (stationCard) stationCard.classList.add('expanded');
             this.isExpanded = true;
-            console.log('Expanded station selection with cached data');
         }
     }
 
@@ -245,15 +235,12 @@ class StationSelector {
             defaultCards.style.display = 'flex';
             if (stationCard) stationCard.classList.remove('expanded');
             this.isExpanded = false;
-            console.log('Collapsed station selection');
         }
     }
 
     // Select a station
     selectStation(stationId) {
         if (!this.stationManager) return;
-
-        console.log('Selecting station:', stationId);
 
         // Update station manager
         this.stationManager.saveSelectedStation(stationId);

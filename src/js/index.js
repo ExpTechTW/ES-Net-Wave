@@ -34,14 +34,12 @@ window.addEventListener('keydown', (event) => {
     // Ctrl+R or F5 for reload
     if ((event.ctrlKey && event.key === 'r') || event.key === 'F5') {
         event.preventDefault();
-        console.log('Reloading from renderer process...');
         window.location.reload();
     }
 });
 
 // Handle window before unload (cleanup)
 window.addEventListener('beforeunload', () => {
-    console.log('Cleaning up application...');
 
     if (window.waveformVisualizer) {
         window.waveformVisualizer.destroy();
@@ -57,7 +55,6 @@ window.addEventListener('beforeunload', () => {
     }
 
     // Reset initialization flag for potential reload
-    console.log('Application cleanup completed');
 });
 
 ipcRenderer.on('set-station-request', (event, stationId) => {

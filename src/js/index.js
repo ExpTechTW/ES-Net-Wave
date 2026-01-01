@@ -1,8 +1,10 @@
 const WaveformVisualizer = require('../js/visualization/waveform');
 const WSService = require('../js/websocket');
+const { StationSelector } = require('../js/ui/station-selector');
 const { ipcRenderer } = require('electron');
 
 let wsService;
+let stationSelector;
 
 function initializeApplication() {
     try {
@@ -10,6 +12,11 @@ function initializeApplication() {
 
         window.waveformVisualizer = new WaveformVisualizer();
         window.waveformVisualizer.initialize();
+
+        // Initialize station selector
+        stationSelector = new StationSelector();
+        stationSelector.initialize();
+        window.stationSelector = stationSelector;
     } catch (error) {
         console.error('Failed to initialize application:', error);
     }
@@ -22,15 +29,35 @@ window.addEventListener('resize', () => {
     }
 });
 
+// Handle keyboard shortcuts for reload (fallback)
+window.addEventListener('keydown', (event) => {
+    // Ctrl+R or F5 for reload
+    if ((event.ctrlKey && event.key === 'r') || event.key === 'F5') {
+        event.preventDefault();
+        console.log('Reloading from renderer process...');
+        window.location.reload();
+    }
+});
+
 // Handle window before unload (cleanup)
 window.addEventListener('beforeunload', () => {
+    console.log('Cleaning up application...');
+
     if (window.waveformVisualizer) {
         window.waveformVisualizer.destroy();
         window.waveformVisualizer = null;
     }
     if (wsService) {
+        wsService.destroy();
         wsService = null;
     }
+    if (stationSelector) {
+        stationSelector.destroy();
+        stationSelector = null;
+    }
+
+    // Reset initialization flag for potential reload
+    console.log('Application cleanup completed');
 });
 
 ipcRenderer.on('set-station-request', (event, stationId) => {

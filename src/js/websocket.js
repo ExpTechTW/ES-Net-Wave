@@ -18,7 +18,7 @@ class WSService {
 
     init() {
         this.connect();
-        setInterval(() => {
+        this.heartbeatInterval = setInterval(() => {
             const hb = this.getHeartbeat();
             this.sendToRenderer('server-heartbeat', hb);
         }, 1000);
@@ -135,6 +135,21 @@ class WSService {
                 this.ws.close();
             }
             this.connect();
+        }
+    }
+
+    // Cleanup method to prevent memory leaks
+    destroy() {
+        // Clear heartbeat interval
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+
+        // Close WebSocket connection
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
         }
     }
 }

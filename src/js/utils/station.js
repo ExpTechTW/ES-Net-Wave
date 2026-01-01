@@ -40,6 +40,7 @@ class StationManager {
 
             if (cols.length >= 7) {
                 const id = cols[1];
+                const areaCode = cols[5]; // Area code from code column (region code)
                 let net = cols[6];
                 if (net === "1") net = "SE-Net";
                 else if (net === "2") net = "MS-Net";
@@ -52,6 +53,7 @@ class StationManager {
                     // console.log('Adding station:', id, 'code:', stationCode, 'location:', location);
                     this.stations[id] = {
                         net: net,
+                        areaCode: areaCode,
                         info: [{ code: stationCode }],
                         location: location
                     };
@@ -99,9 +101,114 @@ class StationManager {
                 id: id,
                 location: station.location || "未知地區",
                 net: station.net,
+                areaCode: station.areaCode,
                 code: station.info && station.info[0] ? parseInt(station.info[0].code) : 0
             }))
             .sort((a, b) => a.code - b.code);
+    }
+
+    getESNetStationsGroupedByCity() {
+        const stations = this.getESNetStations();
+
+        // Group stations by city
+        const grouped = {};
+        stations.forEach(station => {
+            // Extract city from location (format: "縣市區鎮")
+            let city = station.location;
+
+            // Try to extract the city part (縣市) - match first occurrence of 縣 or 市
+            // Examples: "新北市中和區" -> "新北市", "新竹縣竹東鎮" -> "新竹縣", "雲林縣斗六市" -> "雲林縣"
+            const cityMatch = station.location.match(/^(.+?[縣市])/);
+            if (cityMatch) {
+                city = cityMatch[1]; // The city part
+            }
+
+            console.log(`Station ${station.id}: location="${station.location}" -> city="${city}"`);
+
+            if (!grouped[city]) {
+                grouped[city] = [];
+            }
+            grouped[city].push(station);
+        });
+
+        // Sort cities by the smallest area code in each city, then sort stations within each city
+        const sortedCities = Object.keys(grouped).sort((a, b) => {
+            const minCodeA = Math.min(...grouped[a].map(s => s.code));
+            const minCodeB = Math.min(...grouped[b].map(s => s.code));
+            return minCodeA - minCodeB;
+        });
+
+        const sortedGrouped = {};
+        sortedCities.forEach(city => {
+            sortedGrouped[city] = grouped[city].sort((a, b) => {
+                // First sort by area code, then by station ID
+                if (a.code !== b.code) {
+                    return a.code - b.code;
+                }
+                return a.id.localeCompare(b.id);
+            });
+        });
+
+        console.log('ES-Net stations grouped by city (sorted by area code):', sortedGrouped);
+        return sortedGrouped;
+    }
+
+    getESNetStationsGroupedByTown() {
+        const stations = this.getESNetStations();
+
+        // Group stations by town
+        const grouped = {};
+        stations.forEach(station => {
+            // Extract town from location (format: "縣市區鎮")
+            // Examples: "新北市中和區", "新竹縣竹東鎮", "雲林縣斗六市", "屏東縣竹田鄉"
+            let town = station.location;
+
+            // Try to extract the administrative division (區/鎮/市/鄉)
+            const patterns = [
+                /(.+[縣市])(.+[區鎮市鄉])$/  // Match "縣市" + "區鎮市鄉"
+            ];
+
+            for (const pattern of patterns) {
+                const match = station.location.match(pattern);
+                if (match) {
+                    town = match[2]; // The administrative division part
+                    break;
+                }
+            }
+
+            console.log(`Station ${station.id}: location="${station.location}" -> town="${town}"`);
+
+            // Fallback: if no pattern matches, use the whole location
+            if (town === station.location) {
+                console.log(`Could not parse town from location: "${station.location}"`);
+            }
+
+            if (!grouped[town]) {
+                grouped[town] = [];
+            }
+            grouped[town].push(station);
+        });
+
+        // Sort towns by the smallest area code in each town, then sort stations within each town
+        const sortedTowns = Object.keys(grouped).sort((a, b) => {
+            const minCodeA = Math.min(...grouped[a].map(s => s.code));
+            const minCodeB = Math.min(...grouped[b].map(s => s.code));
+            return minCodeA - minCodeB;
+        });
+
+        const sortedGrouped = {};
+        sortedTowns.forEach(town => {
+            sortedGrouped[town] = grouped[town].sort((a, b) => {
+                // First sort by area code, then by station ID
+                if (a.code !== b.code) {
+                    return a.code - b.code;
+                }
+                return a.id.localeCompare(b.id);
+            });
+        });
+
+        console.log('ES-Net stations grouped by town (sorted by area code):', sortedGrouped);
+        return sortedGrouped;
     }
 
     saveSelectedStation(stationId) {

@@ -9,7 +9,6 @@ class WaveformRenderer {
         this.ctxZ = null;
         this.ctxTime = null;
         this.maxPoints = constants.WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
-        this.currentScale = constants.WAVEFORM_CONSTANTS.CANVAS.DEFAULT_SCALE;
         this.animationId = null;
         this.isInitialized = false;
     }
@@ -100,25 +99,17 @@ class WaveformRenderer {
         const width = canvasX.width;
         const height = canvasX.height;
 
-        // Compute global scale from all axes
-        let maxVal = 0;
-        for (let i = 0; i < this.maxPoints; i++) {
-            const localMax = Math.max(
-                Math.abs(bufX[i] || 0),
-                Math.abs(bufY[i] || 0),
-                Math.abs(bufZ[i] || 0)
-            );
-            if (localMax > maxVal) maxVal = localMax;
-        }
-        this.currentScale = Math.max(maxVal, constants.WAVEFORM_CONSTANTS.CANVAS.DEFAULT_SCALE) * 1.1;
+        // Compute individual scales for each axis
+        const scaleX = this.computeAxisScale(bufX);
+        const scaleY = this.computeAxisScale(bufY);
+        const scaleZ = this.computeAxisScale(bufZ);
 
         const xStep = width / (this.maxPoints - 1);
-        const yScale = (height / 2) / this.currentScale;
 
-        // Draw each axis
-        this.drawWaveformLine(this.ctxX, canvasX, bufX, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_X, xStep, yScale, height);
-        this.drawWaveformLine(this.ctxY, canvasY, bufY, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_Y, xStep, yScale, height);
-        this.drawWaveformLine(this.ctxZ, canvasZ, bufZ, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_Z, xStep, yScale, height);
+        // Draw each axis with its individual scale
+        this.drawWaveformLine(this.ctxX, canvasX, bufX, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_X, xStep, (height / 2) / scaleX, height);
+        this.drawWaveformLine(this.ctxY, canvasY, bufY, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_Y, xStep, (height / 2) / scaleY, height);
+        this.drawWaveformLine(this.ctxZ, canvasZ, bufZ, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_Z, xStep, (height / 2) / scaleZ, height);
 
         // Draw time axis if available
         if (this.ctxTime) {
@@ -127,6 +118,16 @@ class WaveformRenderer {
                 this.drawTimeAxis(this.ctxTime, canvasTime);
             }
         }
+    }
+
+    // Compute scale for a single axis
+    computeAxisScale(data) {
+        let maxVal = 0;
+        for (let i = 0; i < this.maxPoints; i++) {
+            const absVal = Math.abs(data[i] || 0);
+            if (absVal > maxVal) maxVal = absVal;
+        }
+        return Math.max(maxVal, constants.WAVEFORM_CONSTANTS.CANVAS.DEFAULT_SCALE) * 1.1;
     }
 
     // Draw a single waveform line

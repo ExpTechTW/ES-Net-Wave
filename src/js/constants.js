@@ -1,7 +1,6 @@
 const WAVEFORM_CONSTANTS = {
     CANVAS: {
         MAX_POINTS: 6000,
-        DEFAULT_SCALE: 1.5,
         GRID_LINES: 6,
         TIME_INTERVAL: 10,
         SAMPLE_RATE: 0.02,

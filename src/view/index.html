@@ -20,16 +20,15 @@
             </div>
         </div>
         <div id="info-area">
-            <!-- Default cards (shown when no station selected) -->
             <div id="default-cards">
                 <div class="card" id="card-status">
-                    <div class="value" id="val-status">🔴 Disconnected</div>
+                    <div class="value" id="val-status">🔄 Connecting</div>
                 </div>
                 <div class="card" id="card-station">
-                    <div class="value" id="val-station">E-310-17E83F8</div>
+                    <div class="value" id="val-station">-----</div>
                 </div>
                 <div class="card" id="card-area">
-                    <div class="value" id="val-area">新竹縣 竹東鎮</div>
+                    <div class="value" id="val-area">--- ---</div>
                 </div>
                 <div class="card" id="card-int">
                     <div class="label">Intensity</div>
@@ -48,22 +47,12 @@
                 </div>
             </div>
 
-            <!-- Station Selection List (separate from default cards) -->
             <div id="station-selection" class="station-selection" style="display: none;">
                 <div id="station-list" class="station-list">
-                    <!-- Stations will be populated here -->
                 </div>
             </div>
-
-            <!-- Selected station card (shown when station is selected) -->
-            <div id="selected-station-card" class="card selected-station-card" style="display: none;">
-                <div class="label">測站</div>
-                <div class="value" id="selected-station-info">選擇測站中...</div>
-            </div>
         </div>
-        <!-- <script src="../js/constants.js"></script> -->
         <script src="../js/index.js"></script>
-        <!-- <script src="../js/visualization/waveform.js"></script> -->
     </div>
 </body>
 

@@ -1,6 +1,5 @@
-// Station Selector UI Component
-// Handles station selection interface and interactions
 const { StationManager } = require('../utils/station');
+const constants = require('../constants');
 
 class StationSelector {
     constructor() {
@@ -22,8 +21,34 @@ class StationSelector {
             // Set initial selected station from saved preference
             const savedStationId = this.stationManager.getSelectedStation();
             if (savedStationId) {
-                // Update UI with saved station
-                this.updateSelectedStationUI(savedStationId);
+                // Update main UI with saved station info
+                this.updateMainStationDisplay(savedStationId);
+
+                // Notify WebSocket service to switch to saved station
+                if (window.wsService && typeof window.wsService.setStation === 'function') {
+                    window.wsService.setStation(savedStationId);
+                }
+
+                // Notify waveform visualizer to update current station
+                if (window.waveformVisualizer && typeof window.waveformVisualizer.setStation === 'function') {
+                    window.waveformVisualizer.setStation(savedStationId);
+                }
+            } else {
+                // No saved station, connect to default station
+                const defaultStationId = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID; // Use default station
+
+                // Update UI with default station
+                this.updateSelectedStationUI(defaultStationId);
+
+                // Notify WebSocket service to connect to default station
+                if (window.wsService && typeof window.wsService.setStation === 'function') {
+                    window.wsService.setStation(defaultStationId);
+                }
+
+                // Notify waveform visualizer to update current station
+                if (window.waveformVisualizer && typeof window.waveformVisualizer.setStation === 'function') {
+                    window.waveformVisualizer.setStation(defaultStationId);
+                }
             }
 
             // Setup event handlers
@@ -75,6 +100,12 @@ class StationSelector {
                 stationItem.className = 'station-item';
                 stationItem.dataset.stationId = station.id;
 
+                // Check if this station is currently selected and add 'selected' class
+                const currentSelectedStation = this.getSelectedStation();
+                if (currentSelectedStation && currentSelectedStation === station.id) {
+                    stationItem.classList.add('selected');
+                }
+
                 // Create station ID element
                 const stationId = document.createElement('div');
                 stationId.className = 'station-id';
@@ -108,6 +139,12 @@ class StationSelector {
 
         // Use event delegation for better memory management
         this.setupEventDelegation();
+
+        // Update city header selection state for current selected station
+        const currentSelectedStation = this.getSelectedStation();
+        if (currentSelectedStation) {
+            this.updateCityHeaderSelection(currentSelectedStation);
+        }
 
         this.stationListCreated = true;
     }
@@ -248,30 +285,33 @@ class StationSelector {
         // Update UI (data is available from cache)
         this.updateSelectedStationUI(stationId);
 
+        // Update city header selection state
+        this.updateCityHeaderSelection(stationId);
+
         // Collapse selection
         this.collapseStationSelection();
+
+        // Immediately clear waveform when switching stations
+        if (window.waveformVisualizer && typeof window.waveformVisualizer.clearWaveform === 'function') {
+            window.waveformVisualizer.clearWaveform();
+        }
 
         // Notify WebSocket service to switch station
         if (window.wsService && typeof window.wsService.setStation === 'function') {
             window.wsService.setStation(stationId);
         }
 
+        // Notify waveform visualizer to update current station
+        if (window.waveformVisualizer && typeof window.waveformVisualizer.setStation === 'function') {
+            window.waveformVisualizer.setStation(stationId);
+        }
+
         // Emit event for other components
         this.emitStationChange(stationId);
     }
 
-    // Update selected station UI
-    updateSelectedStationUI(stationId) {
-        // Update station list visual selection (only if DOM exists)
-        const stationItems = document.querySelectorAll('.station-item');
-        stationItems.forEach(item => {
-            if (item.dataset.stationId === stationId) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-
+    // Update main station display (station name and area on main interface)
+    updateMainStationDisplay(stationId) {
         // Update station display
         const stationElement = document.getElementById('val-station');
         if (stationElement) {
@@ -283,17 +323,62 @@ class StationSelector {
             }
         }
 
-        // Update area display (data is always available from cache)
-        const stationInfo = this.stationManager.getStationInfo(stationId);
+        // Update area display
         const areaElement = document.getElementById('val-area');
         if (areaElement) {
+            const stationInfo = this.stationManager.getStationInfo(stationId);
             if (stationInfo && stationInfo.location) {
                 areaElement.textContent = stationInfo.location;
             } else {
-                // Fallback if station not found in cache
                 areaElement.textContent = '未知區域';
             }
         }
+    }
+
+    // Update city header selection state
+    updateCityHeaderSelection(stationId) {
+        // Clear all city header selection states
+        const allCityHeaders = document.querySelectorAll('.city-header');
+        allCityHeaders.forEach(header => {
+            header.classList.remove('selected');
+        });
+
+        // Find the city that contains the selected station
+        const stationInfo = this.stationManager.getStationInfo(stationId);
+        if (stationInfo && stationInfo.location) {
+            // Extract city from location (format: "縣市區鎮")
+            let city = stationInfo.location;
+
+            // Try to extract the city part (縣市) - match first occurrence of 縣 or 市
+            const cityMatch = stationInfo.location.match(/^(.+?[縣市])/);
+            if (cityMatch) {
+                city = cityMatch[1]; // The city part
+            }
+
+            // Find and select the corresponding city header
+            const cityHeader = document.querySelector(`.city-header[data-city="${city}"]`);
+            if (cityHeader) {
+                cityHeader.classList.add('selected');
+            }
+        }
+    }
+
+    // Update selected station UI (highlight selected station in list)
+    updateSelectedStationUI(stationId) {
+        // Clear all station selection states
+        const allStationItems = document.querySelectorAll('.station-item');
+        allStationItems.forEach(item => {
+            item.classList.remove('selected');
+        });
+
+        // Find and select the corresponding station item
+        const selectedStationItem = document.querySelector(`.station-item[data-station-id="${stationId}"]`);
+        if (selectedStationItem) {
+            selectedStationItem.classList.add('selected');
+        }
+
+        // Update main station display
+        this.updateMainStationDisplay(stationId);
     }
 
     // Emit station change event

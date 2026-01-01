@@ -1,5 +1,3 @@
-// Data Display Module
-// Handles the display of seismic data information
 const constants = require('../constants');
 
 class DataDisplay {
@@ -7,36 +5,30 @@ class DataDisplay {
         this.isInitialized = false;
     }
 
-    // Initialize data display
     initialize() {
         this.resetDisplay();
         this.isInitialized = true;
     }
 
-    // Update intensity data in UI
     updateIntensityData(intensity, pga, timestamp) {
         if (!this.isInitialized) return;
 
-        // Update intensity
         const intensityElement = document.getElementById('val-int');
         if (intensityElement) {
             intensityElement.textContent = intensity.toFixed(1);
         }
 
-        // Update PGA
         const pgaElement = document.getElementById('val-pga');
         if (pgaElement) {
             pgaElement.textContent = pga.toFixed(2);
         }
 
-        // Update intensity level
         const intensityLevelElement = document.getElementById('val-int-level');
         if (intensityLevelElement) {
             const level = constants.WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
             intensityLevelElement.textContent = level;
         }
 
-        // Update time
         const timeElement = document.getElementById('val-time');
         if (timeElement) {
             const date = new Date(Number(timestamp));
@@ -53,7 +45,6 @@ class DataDisplay {
         }
     }
 
-    // Update connection status
     updateConnectionStatus(status) {
         if (!this.isInitialized) return;
 
@@ -71,7 +62,6 @@ class DataDisplay {
         }
     }
 
-    // Update data status (Connected vs No Data)
     updateDataStatus(hasData) {
         if (!this.isInitialized) return;
 
@@ -86,7 +76,6 @@ class DataDisplay {
         }
     }
 
-    // Reset data display to default values
     resetDisplay() {
         const intensityElement = document.getElementById('val-int');
         if (intensityElement) {
@@ -109,32 +98,75 @@ class DataDisplay {
         }
     }
 
-    // Update station information
-    updateStationInfo(station) {
+    updateConnectionStatus(status) {
+        if (!this.isInitialized) return;
+
+        const statusElement = document.getElementById('val-status');
+        if (statusElement) {
+            switch (status) {
+                case 'connected':
+                    statusElement.textContent = '🟢 Connected';
+                    break;
+                case 'connecting':
+                    statusElement.textContent = '🔄 Connecting';
+                    break;
+                case 'disconnected':
+                    statusElement.textContent = '🔴 Disconnected';
+                    break;
+                case 'error':
+                    statusElement.textContent = '❌ Connection Error';
+                    break;
+                default:
+                    statusElement.textContent = '⚪ Unknown';
+            }
+        }
+    }
+
+    updateStationInfo(stationId) {
         if (!this.isInitialized) return;
 
         const stationElement = document.getElementById('val-station');
         if (stationElement) {
-            stationElement.textContent = 'E-310-' + station;
+            if (window.stationSelector) {
+                const stationInfo = window.stationSelector.stationManager.getStationInfo(stationId);
+                if (stationInfo && stationInfo.areaCode) {
+                    stationElement.textContent = `E-${stationInfo.areaCode}-${stationId}`;
+                } else {
+                    stationElement.textContent = `E-${stationId}`;
+                }
+            } else {
+                stationElement.textContent = `E-${stationId}`;
+            }
+        }
+
+        const areaElement = document.getElementById('val-area');
+        if (areaElement && window.stationSelector) {
+            const stationInfo = window.stationSelector.stationManager.getStationInfo(stationId);
+            if (stationInfo && stationInfo.location) {
+                areaElement.textContent = stationInfo.location;
+            } else {
+                areaElement.textContent = '--- ---';
+            }
         }
     }
 
-    // Initialize UI elements
     initializeUI() {
-        // Set initial status
         const statusElement = document.getElementById('val-status');
         if (statusElement) {
-            statusElement.textContent = '🔴 Disconnected';
+            statusElement.textContent = '🔄 Connecting';
         }
 
-        // Set initial station
         const stationElement = document.getElementById('val-station');
         if (stationElement) {
-            stationElement.textContent = 'E-310-' + constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
+            stationElement.textContent = '-----';
+        }
+
+        const areaElement = document.getElementById('val-area');
+        if (areaElement) {
+            areaElement.textContent = '--- ---';
         }
     }
 
-    // Cleanup
     destroy() {
         this.isInitialized = false;
     }

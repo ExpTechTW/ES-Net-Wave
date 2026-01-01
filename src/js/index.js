@@ -9,11 +9,11 @@ let stationSelector;
 function initializeApplication() {
     try {
         wsService = new WSService();
+        window.wsService = wsService;
 
         window.waveformVisualizer = new WaveformVisualizer();
         window.waveformVisualizer.initialize();
 
-        // Initialize station selector
         stationSelector = new StationSelector();
         stationSelector.initialize();
         window.stationSelector = stationSelector;
@@ -22,23 +22,19 @@ function initializeApplication() {
     }
 }
 
-// Handle window resize
 window.addEventListener('resize', () => {
     if (window.waveformVisualizer) {
         window.waveformVisualizer.handleResize();
     }
 });
 
-// Handle keyboard shortcuts for reload (fallback)
 window.addEventListener('keydown', (event) => {
-    // Ctrl+R or F5 for reload
     if ((event.ctrlKey && event.key === 'r') || event.key === 'F5') {
         event.preventDefault();
         window.location.reload();
     }
 });
 
-// Handle window before unload (cleanup)
 window.addEventListener('beforeunload', () => {
 
     if (window.waveformVisualizer) {
@@ -53,8 +49,6 @@ window.addEventListener('beforeunload', () => {
         stationSelector.destroy();
         stationSelector = null;
     }
-
-    // Reset initialization flag for potential reload
 });
 
 ipcRenderer.on('set-station-request', (event, stationId) => {
@@ -63,7 +57,6 @@ ipcRenderer.on('set-station-request', (event, stationId) => {
     }
 });
 
-// Listen for initialization signal from main process
 ipcRenderer.on('initialize-waveform', () => {
     initializeApplication();
 });

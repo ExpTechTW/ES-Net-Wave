@@ -1,10 +1,4 @@
 const WAVEFORM_CONSTANTS = {
-    STATION: {
-        DEFAULT_ID: '17E83F8'
-    },
-    WEBSOCKET: {
-        URL: 'ws://seismograph-tpe.exptech.dev/es-net-raw'
-    },
     CANVAS: {
         MAX_POINTS: 6000,
         DEFAULT_SCALE: 1.5,
@@ -39,6 +33,9 @@ const WAVEFORM_CONSTANTS = {
         CRITICAL: 8.0,
         WARNING: 2.5,
         NOTICE: 0.8
+    },
+    STATION: {
+        DEFAULT_ID: "17E83F8"
     },
     INTENSITY_COLORS: {
         '0': '#1A1A1A',

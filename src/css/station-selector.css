@@ -93,6 +93,10 @@
     border-color: #555;
 }
 
+.city-header.selected {
+    border-color: #00bbff;
+}
+
 .city-header.expanded::after {
     content: '▼';
     position: absolute;
@@ -116,7 +120,7 @@
 .city-stations {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 5px;
     margin-bottom: 4px;
     max-height: 0;
     overflow: hidden;
@@ -160,16 +164,7 @@
 
 .station-item.selected {
     background: #2a2a2a;
-    border-color: #555;
-}
-
-.station-item.selected::after {
-    content: '●';
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    color: #fff;
-    font-size: 12px;
+    border-color: #00bbff;
 }
 
 .station-id {

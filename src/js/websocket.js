@@ -1,23 +1,20 @@
 const WebSocket = require('ws');
 const { ipcRenderer } = require('electron');
+const constants = require('../js/constants');
 
 class WSService {
     constructor() {
         this.ws = null;
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
-        this.deviceId = "17E83F8";
+        this.deviceId = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
         this.wsUrl = "wss://bamboo.exptech.dev/ws/eswave";
         this.isManualReconnect = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 10;
-        this.baseReconnectDelay = 1000; // 1 second
-        this.maxReconnectDelay = 30000; // 30 seconds
-        this.init();
-    }
+        this.baseReconnectDelay = 1000;
+        this.maxReconnectDelay = 30000;
 
-    init() {
-        this.connect();
         this.heartbeatInterval = setInterval(() => {
             const hb = this.getHeartbeat();
             this.sendToRenderer('server-heartbeat', hb);
@@ -31,12 +28,14 @@ class WSService {
             return;
         }
 
+        this.sendToRenderer('connection-status', 'connecting');
+
         this.ws = new WebSocket(this.wsUrl);
 
         this.ws.on('open', () => {
             console.log('WebSocket connected');
             this.isManualReconnect = false;
-            this.reconnectAttempts = 0; // Reset on successful connection
+            this.reconnectAttempts = 0;
             this.sendToRenderer('connection-status', 'connected');
             this.ws.send(this.deviceId);
         });
@@ -53,7 +52,6 @@ class WSService {
             console.error('WebSocket error:', error);
             this.sendToRenderer('connection-status', 'error');
 
-            // Check if it's a server error (5xx) that needs longer delay
             const isServerError = error.message && (
                 error.message.includes('522') ||
                 error.message.includes('502') ||
@@ -78,8 +76,6 @@ class WSService {
             this.sendToRenderer('connection-status', 'disconnected');
 
             if (!this.isManualReconnect) {
-                // Only auto-reconnect if not manually triggered
-                // Use shorter delay for normal disconnections
                 setTimeout(() => this.connect(), this.baseReconnectDelay);
             }
         });
@@ -87,9 +83,7 @@ class WSService {
 
     handleMessage(message) {
         try {
-            // Forward the raw message to renderer for processing
             this.sendToRenderer('ws-message', message);
-            // Also send connected status since we're receiving data
             this.sendToRenderer('connection-status', 'connected');
         } catch (e) {
             console.error(e);
@@ -114,39 +108,27 @@ class WSService {
 
         if (wasChanged) {
             console.log(`Switching station from ${this.deviceId} to ${stationId}`);
-        } else {
-            console.log(`Reconnecting to station ${stationId}`);
         }
 
         this.deviceId = stationId;
-        this.reconnectAttempts = 0; // Reset reconnection attempts on station change
+        this.reconnectAttempts = 0;
 
-        // Always reset network status and clear waveform
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
 
-        // Clear waveform data in renderer
-        this.sendToRenderer('clear-waveform');
-
-        // Only reconnect if station actually changed
-        if (wasChanged) {
-            if (this.ws) {
-                this.isManualReconnect = true;
-                this.ws.close();
-            }
-            this.connect();
+        if (this.ws) {
+            this.isManualReconnect = true;
+            this.ws.close();
         }
+        this.connect();
     }
 
-    // Cleanup method to prevent memory leaks
     destroy() {
-        // Clear heartbeat interval
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
             this.heartbeatInterval = null;
         }
 
-        // Close WebSocket connection
         if (this.ws) {
             this.ws.close();
             this.ws = null;

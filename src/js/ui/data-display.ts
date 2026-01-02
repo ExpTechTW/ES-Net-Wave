@@ -40,11 +40,19 @@ class DataDisplay {
         if (cardInt) {
             const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
             cardInt.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
+            const label = cardInt.querySelector('.label');
+            if (label) {
+                label.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+            }
         }
         const cardIntLevel = document.getElementById('card-int-level');
         if (cardIntLevel) {
             const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
             cardIntLevel.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
+            const label = cardIntLevel.querySelector('.label');
+            if (label) {
+                label.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+            }
         }
 
         const timeElement = document.getElementById('val-time');
@@ -100,10 +108,18 @@ class DataDisplay {
         const cardInt = document.getElementById('card-int');
         if (cardInt) {
             cardInt.style.backgroundColor = '';
+            const label = cardInt.querySelector('.label');
+            if (label) {
+                label.style.color = '';
+            }
         }
         const cardIntLevel = document.getElementById('card-int-level');
         if (cardIntLevel) {
             cardIntLevel.style.backgroundColor = '';
+            const label = cardIntLevel.querySelector('.label');
+            if (label) {
+                label.style.color = '';
+            }
         }
 
         const timeElement = document.getElementById('val-time');

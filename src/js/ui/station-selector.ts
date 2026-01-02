@@ -287,6 +287,16 @@ class StationSelector {
         // Update city header selection state
         this.updateCityHeaderSelection(stationId);
 
+        // Collapse all cities
+        const allCityStations = document.querySelectorAll('.city-stations');
+        allCityStations.forEach(container => {
+            container.classList.remove('expanded');
+        });
+        const allCityHeaders = document.querySelectorAll('.city-header');
+        allCityHeaders.forEach(header => {
+            header.classList.remove('expanded');
+        });
+
         // Collapse selection
         this.collapseStationSelection();
 

@@ -25,9 +25,10 @@ function createWindow() {
             backgroundThrottling: false,
             offscreen: false
         },
+        icon: path.join(__dirname, '..', 'app.ico')
     });
     mainWindow.setMenu(null);
-    mainWindow.loadFile('src/view/index.html');
+    mainWindow.loadFile(path.join(app.getAppPath(), 'src', 'view', 'index.html'));
     mainWindow.on('closed', () => mainWindow = null);
 }
 

@@ -1,6 +1,6 @@
 {
     "name": "es-net-wave",
-    "version": "1.0.0",
+    "version": "1.0.0-beta.1",
     "description": "ES-Net-Wave",
     "author": "ExpTech Studio <ExpTech.tw@gmail.com>",
     "main": "dist/main.js",
@@ -9,21 +9,46 @@
         "dev": "concurrently --kill-others --names \"MAIN,RENDER,ELECTRON\" \"npm run tsc-main\" \"npm run tsc-renderer\" \"electron .\"",
         "tsc-main": "tsc -p tsconfig.main.json --watch --preserveWatchOutput",
         "tsc-renderer": "esbuild src/js/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron --watch",
-        "start": "electron ."
+        "start": "electron .",
+        "dist": "npm run build && electron-builder --win"
     },
+    "icon": "./app.ico",
     "repository": {
         "type": "git",
         "url": "https://github.com/ExpTechTW/ES-Net-Wave.git"
     },
     "dependencies": {
-        "electron": "^25.0.0",
         "ws": "^8.13.0"
     },
     "devDependencies": {
         "@types/node": "^25.0.3",
         "@types/ws": "^8.18.1",
         "concurrently": "^9.2.1",
+        "electron": "^25.0.0",
+        "electron-builder": "^24.0.0",
         "esbuild": "^0.27.2",
         "typescript": "^5.9.3"
+    },
+    "build": {
+        "appId": "com.exptech.es-net-wave",
+        "productName": "ES-Net-Wave",
+        "directories": {
+            "output": "dist"
+        },
+        "win": {
+            "target": "nsis",
+            "icon": "./app.ico"
+        },
+        "files": [
+            "dist/**/*",
+            "src/view/**/*",
+            "src/css/**/*",
+            "!tsconfig*.json",
+            "!*.md",
+            "!package-lock.json",
+            "!node_modules/**/*",
+            "!dist/builder-*",
+            "!dist/win-unpacked/**/*"
+        ]
     }
 }

@@ -1,9 +1,8 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const WSService = require('./js/websocket');
+import { app, BrowserWindow, ipcMain } from 'electron';
+import * as path from 'path';
 
-let mainWindow;
-let dataService;
+let mainWindow: BrowserWindow | null = null;
+let dataService: any;
 
 function initializeWaveformVisualizer() {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -22,7 +21,6 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            enableRemoteModule: false,
             zoomFactor: 1.0,
             backgroundThrottling: false,
             offscreen: false
@@ -36,10 +34,10 @@ function createWindow() {
 app.whenReady().then(() => {
     createWindow();
 
-    mainWindow.webContents.on('dom-ready', () => {
-        mainWindow.webContents.removeAllListeners('before-input-event');
+    mainWindow!.webContents.on('dom-ready', () => {
+        mainWindow!.webContents.removeAllListeners('before-input-event');
 
-        mainWindow.webContents.on('before-input-event', (event, input) => {
+        mainWindow!.webContents.on('before-input-event', (event, input) => {
             if (
                 (input.control || input.meta) &&
                 ['+', '-', '=', '0'].includes(input.key)
@@ -48,11 +46,11 @@ app.whenReady().then(() => {
             }
             if (input.key === 'F12') {
                 event.preventDefault();
-                mainWindow.webContents.openDevTools();
+                mainWindow!.webContents.openDevTools();
             }
             if (input.control && input.key === 'r') {
                 event.preventDefault();
-                mainWindow.webContents.reloadIgnoringCache();
+                mainWindow!.webContents.reloadIgnoringCache();
             }
         });
 
@@ -60,12 +58,12 @@ app.whenReady().then(() => {
     });
 
     ipcMain.handle('set-station', (event, stationId) => {
-        mainWindow.webContents.send('set-station-request', stationId);
+        mainWindow!.webContents.send('set-station-request', stationId);
         return true;
     });
 
     ipcMain.on('ws-message-to-main', (event, { channel, data }) => {
-        mainWindow.webContents.send(channel, data);
+        mainWindow!.webContents.send(channel, data);
     });
 });
 

@@ -1,4 +1,4 @@
-const WAVEFORM_CONSTANTS = {
+export const WAVEFORM_CONSTANTS = {
     CANVAS: {
         MAX_POINTS: 6000,
         GRID_LINES: 6,
@@ -49,7 +49,7 @@ const WAVEFORM_CONSTANTS = {
         '6+': '#C00000',
         '7': '#9600C8'
     },
-    getIntensityLevel: function(intensity) {
+    getIntensityLevel: function(intensity: number): string {
         if (intensity < 0.5) return '0';
         if (intensity < 1.5) return '1';
         if (intensity < 2.5) return '2';
@@ -62,5 +62,3 @@ const WAVEFORM_CONSTANTS = {
         return '7';
     }
 };
-
-module.exports = { WAVEFORM_CONSTANTS };

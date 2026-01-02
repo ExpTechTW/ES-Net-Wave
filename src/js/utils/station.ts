@@ -1,9 +1,11 @@
 class StationManager {
+    private stations: { [key: string]: any } = {};
+    private region: { [key: string]: any } = {};
+    private selectedStationId: string = '';
+    private isLoading: boolean = false;
+
     constructor() {
-        this.stations = {};
-        this.region = {};
         this.selectedStationId = this.loadSelectedStation();
-        this.isLoading = false;
     }
 
     async loadStations() {
@@ -25,7 +27,7 @@ class StationManager {
         }
     }
 
-    parseStations(csvText) {
+    parseStations(csvText: string) {
         const rows = csvText.split('\n');
         this.stations = {};
 
@@ -62,7 +64,7 @@ class StationManager {
         });
     }
 
-    getLocationName(code) {
+    getLocationName(code: string): string {
         // Parse location from code (direct match with region.json codes)
         if (!code) {
             // console.log('Invalid code:', code);
@@ -79,7 +81,7 @@ class StationManager {
 
                 // Find town name
                 for (const [townKey, townData] of Object.entries(cityData)) {
-                    if (townKey !== 'code' && townData.code === townCode) {
+                    if (townKey !== 'code' && (townData as any).code === townCode) {
                         // console.log('Found match:', cityKey, townKey, 'for code:', townCode);
                         return `${cityKey} ${townKey}`;
                     }
@@ -110,7 +112,7 @@ class StationManager {
         const stations = this.getESNetStations();
 
         // Group stations by city
-        const grouped = {};
+        const grouped: { [key: string]: any[] } = {};
         stations.forEach(station => {
             // Extract city from location (format: "縣市區鎮")
             let city = station.location;
@@ -135,7 +137,7 @@ class StationManager {
             return minCodeA - minCodeB;
         });
 
-        const sortedGrouped = {};
+        const sortedGrouped: { [key: string]: any[] } = {};
         sortedCities.forEach(city => {
             sortedGrouped[city] = grouped[city].sort((a, b) => {
                 // First sort by area code, then by station ID
@@ -153,7 +155,7 @@ class StationManager {
         const stations = this.getESNetStations();
 
         // Group stations by town
-        const grouped = {};
+        const grouped: { [key: string]: any[] } = {};
         stations.forEach(station => {
             // Extract town from location (format: "縣市區鎮")
             // Examples: "新北市中和區", "新竹縣竹東鎮", "雲林縣斗六市", "屏東縣竹田鄉"
@@ -189,7 +191,7 @@ class StationManager {
             return minCodeA - minCodeB;
         });
 
-        const sortedGrouped = {};
+        const sortedGrouped: { [key: string]: any[] } = {};
         sortedTowns.forEach(town => {
             sortedGrouped[town] = grouped[town].sort((a, b) => {
                 // First sort by area code, then by station ID
@@ -203,22 +205,22 @@ class StationManager {
         return sortedGrouped;
     }
 
-    saveSelectedStation(stationId) {
+    saveSelectedStation(stationId: string) {
         this.selectedStationId = stationId;
         localStorage.setItem('selectedStationId', stationId);
     }
 
-    loadSelectedStation() {
-        return localStorage.getItem('selectedStationId') || null;
+    loadSelectedStation(): string {
+        return localStorage.getItem('selectedStationId') || '';
     }
 
     getSelectedStation() {
         return this.selectedStationId;
     }
 
-    getStationInfo(stationId) {
+    getStationInfo(stationId: string) {
         return this.stations[stationId] || null;
     }
 }
 
-module.exports = { StationManager };
+export { StationManager };

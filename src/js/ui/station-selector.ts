@@ -1,13 +1,12 @@
-const { StationManager } = require('../utils/station');
-const constants = require('../constants');
+import { StationManager } from '../utils/station';
+import { WAVEFORM_CONSTANTS } from '../constants';
 
 class StationSelector {
-    constructor() {
-        this.stationManager = new StationManager();
-        this.isInitialized = false;
-        this.isExpanded = false;
-        this.stationListCreated = false; // Track if DOM has been created
-    }
+    private stationManager: StationManager | null = new StationManager();
+    private isInitialized: boolean = false;
+    private isExpanded: boolean = false;
+    private stationListCreated: boolean = false; // Track if DOM has been created
+    private eventDelegationHandler: ((event: Event) => void) | null = null;
 
     // Initialize the station selector
     async initialize() {
@@ -16,10 +15,10 @@ class StationSelector {
         try {
 
             // Pre-load station data on app startup and cache it locally
-            await this.stationManager.loadStations();
+            await this.stationManager!.loadStations();
 
             // Set initial selected station from saved preference
-            const savedStationId = this.stationManager.getSelectedStation();
+            const savedStationId = this.stationManager!.getSelectedStation();
             if (savedStationId) {
                 // Update main UI with saved station info
                 this.updateMainStationDisplay(savedStationId);
@@ -35,7 +34,7 @@ class StationSelector {
                 }
             } else {
                 // No saved station, connect to default station
-                const defaultStationId = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID; // Use default station
+                const defaultStationId = WAVEFORM_CONSTANTS.STATION.DEFAULT_ID; // Use default station
 
                 // Update UI with default station
                 this.updateSelectedStationUI(defaultStationId);
@@ -78,7 +77,7 @@ class StationSelector {
         stationList.innerHTML = '';
 
         // Get grouped stations
-        const groupedStations = this.stationManager.getESNetStationsGroupedByCity();
+        const groupedStations = this.stationManager!.getESNetStationsGroupedByCity();
 
         // Create city groups
         Object.entries(groupedStations).forEach(([city, cityStations]) => {
@@ -95,7 +94,7 @@ class StationSelector {
             // Initially collapsed (no expanded class)
 
             // Create station items for this city
-            cityStations.forEach(station => {
+            (cityStations as any[]).forEach((station: any) => {
                 const stationItem = document.createElement('div');
                 stationItem.className = 'station-item';
                 stationItem.dataset.stationId = station.id;
@@ -160,17 +159,17 @@ class StationSelector {
         }
 
         // Create new event delegation handler
-        this.eventDelegationHandler = (event) => {
-            const target = event.target.closest('.city-header, .station-item');
+        this.eventDelegationHandler = (event: Event) => {
+            const target = (event.target as Element)?.closest('.city-header, .station-item');
             if (!target) return;
 
             if (target.classList.contains('city-header')) {
-                const city = target.dataset.city;
+                const city = (target as HTMLElement).dataset.city;
                 if (city) {
                     this.toggleCity(city);
                 }
             } else if (target.classList.contains('station-item')) {
-                const stationId = target.dataset.stationId;
+                const stationId = (target as HTMLElement).dataset.stationId;
                 if (stationId) {
                     this.selectStation(stationId);
                 }
@@ -182,7 +181,7 @@ class StationSelector {
     }
 
     // Toggle city expansion
-    toggleCity(city) {
+    toggleCity(city: string) {
         const cityStationsContainer = document.querySelector(`.city-stations[data-city="${city}"]`);
         const cityHeader = document.querySelector(`.city-header[data-city="${city}"]`);
 
@@ -227,7 +226,7 @@ class StationSelector {
 
         // Hide station list when clicking outside
         document.addEventListener('click', (event) => {
-            if (!stationCard.contains(event.target) && !stationSelection.contains(event.target)) {
+            if (!stationCard.contains(event.target as Node) && !stationSelection.contains(event.target as Node)) {
                 this.collapseStationSelection();
             }
         });
@@ -276,7 +275,7 @@ class StationSelector {
     }
 
     // Select a station
-    selectStation(stationId) {
+    selectStation(stationId: string) {
         if (!this.stationManager) return;
 
         // Update station manager
@@ -287,6 +286,16 @@ class StationSelector {
 
         // Update city header selection state
         this.updateCityHeaderSelection(stationId);
+
+        // Collapse all cities
+        const allCityStations = document.querySelectorAll('.city-stations');
+        allCityStations.forEach(container => {
+            container.classList.remove('expanded');
+        });
+        const allCityHeaders = document.querySelectorAll('.city-header');
+        allCityHeaders.forEach(header => {
+            header.classList.remove('expanded');
+        });
 
         // Collapse selection
         this.collapseStationSelection();
@@ -311,11 +320,11 @@ class StationSelector {
     }
 
     // Update main station display (station name and area on main interface)
-    updateMainStationDisplay(stationId) {
+    updateMainStationDisplay(stationId: string) {
         // Update station display
         const stationElement = document.getElementById('val-station');
         if (stationElement) {
-            const stationInfo = this.stationManager.getStationInfo(stationId);
+            const stationInfo = this.stationManager!.getStationInfo(stationId);
             if (stationInfo && stationInfo.areaCode) {
                 stationElement.textContent = `E-${stationInfo.areaCode}-${stationId}`;
             } else {
@@ -326,7 +335,7 @@ class StationSelector {
         // Update area display
         const areaElement = document.getElementById('val-area');
         if (areaElement) {
-            const stationInfo = this.stationManager.getStationInfo(stationId);
+            const stationInfo = this.stationManager!.getStationInfo(stationId);
             if (stationInfo && stationInfo.location) {
                 areaElement.textContent = stationInfo.location;
             } else {
@@ -336,7 +345,7 @@ class StationSelector {
     }
 
     // Update city header selection state
-    updateCityHeaderSelection(stationId) {
+    updateCityHeaderSelection(stationId: string) {
         // Clear all city header selection states
         const allCityHeaders = document.querySelectorAll('.city-header');
         allCityHeaders.forEach(header => {
@@ -344,7 +353,7 @@ class StationSelector {
         });
 
         // Find the city that contains the selected station
-        const stationInfo = this.stationManager.getStationInfo(stationId);
+        const stationInfo = this.stationManager!.getStationInfo(stationId);
         if (stationInfo && stationInfo.location) {
             // Extract city from location (format: "縣市區鎮")
             let city = stationInfo.location;
@@ -364,7 +373,7 @@ class StationSelector {
     }
 
     // Update selected station UI (highlight selected station in list)
-    updateSelectedStationUI(stationId) {
+    updateSelectedStationUI(stationId: string) {
         // Clear all station selection states
         const allStationItems = document.querySelectorAll('.station-item');
         allStationItems.forEach(item => {
@@ -382,7 +391,7 @@ class StationSelector {
     }
 
     // Emit station change event
-    emitStationChange(stationId) {
+    emitStationChange(stationId: string) {
         const event = new CustomEvent('stationChanged', {
             detail: { stationId: stationId }
         });
@@ -391,12 +400,12 @@ class StationSelector {
 
     // Get current selected station
     getSelectedStation() {
-        return this.stationManager.getSelectedStation();
+        return this.stationManager!.getSelectedStation();
     }
 
     // Get station info
-    getStationInfo(stationId) {
-        return this.stationManager.getStationInfo(stationId);
+    getStationInfo(stationId: string) {
+        return this.stationManager!.getStationInfo(stationId);
     }
 
     // Cleanup
@@ -413,4 +422,4 @@ class StationSelector {
     }
 }
 
-module.exports = { StationSelector };
+export { StationSelector };

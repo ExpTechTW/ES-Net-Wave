@@ -1,6 +1,8 @@
-const constants = require('../constants');
+import { WAVEFORM_CONSTANTS } from '../constants';
 
 class DataDisplay {
+    private isInitialized: boolean;
+
     constructor() {
         this.isInitialized = false;
     }
@@ -10,7 +12,7 @@ class DataDisplay {
         this.isInitialized = true;
     }
 
-    updateIntensityData(intensity, pga, timestamp) {
+    updateIntensityData(intensity: number, pga: number, timestamp: number) {
         if (!this.isInitialized) return;
 
         const intensityElement = document.getElementById('val-int');
@@ -25,7 +27,7 @@ class DataDisplay {
 
         const intensityLevelElement = document.getElementById('val-int-level');
         if (intensityLevelElement) {
-            const level = constants.WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
+            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
             intensityLevelElement.textContent = level;
         }
 
@@ -45,24 +47,7 @@ class DataDisplay {
         }
     }
 
-    updateConnectionStatus(status) {
-        if (!this.isInitialized) return;
-
-        const statusElement = document.getElementById('val-status');
-        if (statusElement) {
-            if (status === 'connected') {
-                statusElement.textContent = '🟢 Connected';
-            } else if (status === 'disconnected') {
-                statusElement.textContent = '🔴 Disconnected';
-                this.resetDisplay();
-            } else if (status === 'error') {
-                statusElement.textContent = '🔴 Error';
-                this.resetDisplay();
-            }
-        }
-    }
-
-    updateDataStatus(hasData) {
+    updateDataStatus(hasData: boolean) {
         if (!this.isInitialized) return;
 
         const statusElement = document.getElementById('val-status');
@@ -98,7 +83,7 @@ class DataDisplay {
         }
     }
 
-    updateConnectionStatus(status) {
+    updateConnectionStatus(status: string) {
         if (!this.isInitialized) return;
 
         const statusElement = document.getElementById('val-status');
@@ -122,7 +107,7 @@ class DataDisplay {
         }
     }
 
-    updateStationInfo(stationId) {
+    updateStationInfo(stationId: string) {
         if (!this.isInitialized) return;
 
         const stationElement = document.getElementById('val-station');
@@ -172,4 +157,4 @@ class DataDisplay {
     }
 }
 
-module.exports = DataDisplay;
+export default DataDisplay;

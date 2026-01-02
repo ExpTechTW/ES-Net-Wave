@@ -3,8 +3,12 @@
     "version": "1.0.0",
     "description": "ES-Net-Wave",
     "author": "ExpTech Studio <ExpTech.tw@gmail.com>",
-    "main": "src/main.js",
+    "main": "dist/main.js",
     "scripts": {
+        "build": "tsc -p tsconfig.main.json && esbuild src/js/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron",
+        "dev": "concurrently --kill-others --names \"MAIN,RENDER,ELECTRON\" \"npm run tsc-main\" \"npm run tsc-renderer\" \"electron .\"",
+        "tsc-main": "tsc -p tsconfig.main.json --watch --preserveWatchOutput",
+        "tsc-renderer": "esbuild src/js/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron --watch",
         "start": "electron ."
     },
     "repository": {
@@ -14,5 +18,12 @@
     "dependencies": {
         "electron": "^25.0.0",
         "ws": "^8.13.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.0.3",
+        "@types/ws": "^8.18.1",
+        "concurrently": "^9.2.1",
+        "esbuild": "^0.27.2",
+        "typescript": "^5.9.3"
     }
 }

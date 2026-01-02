@@ -130,9 +130,11 @@ class WSService {
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
 
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(stationId);
+        if (this.ws) {
+            this.isManualReconnect = true;
+            this.ws.close();
         }
+        this.connect();
     }
 
     destroy() {

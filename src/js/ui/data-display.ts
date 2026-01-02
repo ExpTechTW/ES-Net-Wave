@@ -1,4 +1,4 @@
-import { WAVEFORM_CONSTANTS } from '../constants';
+import { ES } from '../constants';
 
 class DataDisplay {
     private isInitialized: boolean;
@@ -18,8 +18,8 @@ class DataDisplay {
         const intensityElement = document.getElementById('val-int');
         if (intensityElement) {
             intensityElement.textContent = intensity.toFixed(1);
-            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
-            intensityElement.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+            const level = ES.getIntensityLevel(intensity);
+            intensityElement.style.color = ES.INTENSITY_TEXTS[level];
         }
 
         const pgaElement = document.getElementById('val-pga');
@@ -29,29 +29,29 @@ class DataDisplay {
 
         const intensityLevelElement = document.getElementById('val-int-level');
         if (intensityLevelElement) {
-            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
+            const level = ES.getIntensityLevel(intensity);
             intensityLevelElement.textContent = level;
-            intensityLevelElement.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
-            intensityLevelElement.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+            intensityLevelElement.style.backgroundColor = ES.INTENSITY_COLORS[level];
+            intensityLevelElement.style.color = ES.INTENSITY_TEXTS[level];
         }
 
         // Update card backgrounds
         const cardInt = document.getElementById('card-int');
         if (cardInt) {
-            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
-            cardInt.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
+            const level = ES.getIntensityLevel(intensity);
+            cardInt.style.backgroundColor = ES.INTENSITY_COLORS[level];
             const label = cardInt.querySelector('.label');
             if (label) {
-                label.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+                label.style.color = ES.INTENSITY_TEXTS[level];
             }
         }
         const cardIntLevel = document.getElementById('card-int-level');
         if (cardIntLevel) {
-            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
-            cardIntLevel.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
+            const level = ES.getIntensityLevel(intensity);
+            cardIntLevel.style.backgroundColor = ES.INTENSITY_COLORS[level];
             const label = cardIntLevel.querySelector('.label');
             if (label) {
-                label.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+                label.style.color = ES.INTENSITY_TEXTS[level];
             }
         }
 

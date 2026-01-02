@@ -1,10 +1,10 @@
-import { WAVEFORM_CONSTANTS } from '../constants';
+import { ES } from '../constants';
 import { ipcRenderer } from 'electron';
 import WaveformRenderer from '../ui/waveform-renderer';
 import DataDisplay from '../ui/data-display';
 
 class WaveformVisualizer {
-    private maxPoints: number = WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
+    private maxPoints: number = ES.CANVAS.MAX_POINTS;
     private bufX: number[] = new Array(this.maxPoints).fill(0);
     private bufY: number[] = new Array(this.maxPoints).fill(0);
     private bufZ: number[] = new Array(this.maxPoints).fill(0);
@@ -12,7 +12,7 @@ class WaveformVisualizer {
     private isConnected: boolean = false;
     private lastDataTime: number = 0;
     private statusCheckInterval: NodeJS.Timeout | null = null;
-    private currentStation: string = WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
+    private currentStation: string = ES.STATION.DEFAULT_ID;
     private renderer: WaveformRenderer = new WaveformRenderer();
     private dataDisplay: DataDisplay = new DataDisplay();
 

@@ -1,4 +1,4 @@
-export const WAVEFORM_CONSTANTS = {
+export const ES = {
     CANVAS: {
         MAX_POINTS: 6000,
         GRID_LINES: 6,

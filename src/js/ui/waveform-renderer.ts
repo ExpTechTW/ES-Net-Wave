@@ -1,13 +1,13 @@
 // Waveform Renderer Module
 // Handles waveform visualization rendering
-import { WAVEFORM_CONSTANTS } from '../constants';
+import { ES } from '../constants';
 
 class WaveformRenderer {
     private ctxX: CanvasRenderingContext2D | null = null;
     private ctxY: CanvasRenderingContext2D | null = null;
     private ctxZ: CanvasRenderingContext2D | null = null;
     private ctxTime: CanvasRenderingContext2D | null = null;
-    private maxPoints: number = WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
+    private maxPoints: number = ES.CANVAS.MAX_POINTS;
     private animationId: number | null = null;
     private isInitialized: boolean = false;
 
@@ -109,9 +109,9 @@ class WaveformRenderer {
         const xStep = width / (this.maxPoints - 1);
 
         // Draw each axis with its individual scale
-        this.drawWaveformLine(this.ctxX, canvasX, bufX, WAVEFORM_CONSTANTS.COLORS.WAVE_X, xStep, (height / 2) / scaleX, height);
-        this.drawWaveformLine(this.ctxY, canvasY, bufY, WAVEFORM_CONSTANTS.COLORS.WAVE_Y, xStep, (height / 2) / scaleY, height);
-        this.drawWaveformLine(this.ctxZ, canvasZ, bufZ, WAVEFORM_CONSTANTS.COLORS.WAVE_Z, xStep, (height / 2) / scaleZ, height);
+        this.drawWaveformLine(this.ctxX, canvasX, bufX, ES.COLORS.WAVE_X, xStep, (height / 2) / scaleX, height);
+        this.drawWaveformLine(this.ctxY, canvasY, bufY, ES.COLORS.WAVE_Y, xStep, (height / 2) / scaleY, height);
+        this.drawWaveformLine(this.ctxZ, canvasZ, bufZ, ES.COLORS.WAVE_Z, xStep, (height / 2) / scaleZ, height);
 
         // Draw time axis if available
         if (this.ctxTime) {
@@ -129,7 +129,7 @@ class WaveformRenderer {
             const absVal = Math.abs(data[i] || 0);
             if (absVal > maxVal) maxVal = absVal;
         }
-        return Math.max(maxVal, WAVEFORM_CONSTANTS.CANVAS.DEFAULT_SCALE) * 1.1;
+        return Math.max(maxVal, ES.CANVAS.DEFAULT_SCALE) * 1.1;
     }
 
     // Draw a single waveform line
@@ -152,13 +152,13 @@ class WaveformRenderer {
 
     // Draw grid lines
     drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
-        ctx.strokeStyle = WAVEFORM_CONSTANTS.COLORS.GRID;
+        ctx.strokeStyle = ES.COLORS.GRID;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(0, h / 2);
         ctx.lineTo(w, h / 2);
-        for (let i = 1; i < WAVEFORM_CONSTANTS.CANVAS.GRID_LINES; i++) {
-            const x = (w / WAVEFORM_CONSTANTS.CANVAS.GRID_LINES) * i;
+        for (let i = 1; i < ES.CANVAS.GRID_LINES; i++) {
+            const x = (w / ES.CANVAS.GRID_LINES) * i;
             ctx.moveTo(x, 0);
             ctx.lineTo(x, h);
         }

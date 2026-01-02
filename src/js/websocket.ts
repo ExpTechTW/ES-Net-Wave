@@ -18,7 +18,7 @@ class WSService {
     private ws: WebSocket | null = null;
     private netStatus: NetStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
     private state: State = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
-    private deviceId: string = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
+    private deviceId: string = constants.ES.STATION.DEFAULT_ID;
     private currentStation: string = this.deviceId;
     private wsUrl: string = "wss://bamboo.exptech.dev/ws/eswave";
     private isManualReconnect: boolean = false;

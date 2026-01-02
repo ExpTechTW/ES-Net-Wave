@@ -1,5 +1,5 @@
 import { StationManager } from '../utils/station';
-import { WAVEFORM_CONSTANTS } from '../constants';
+import { ES } from '../constants';
 
 class StationSelector {
     private stationManager: StationManager | null = new StationManager();
@@ -34,7 +34,7 @@ class StationSelector {
                 }
             } else {
                 // No saved station, connect to default station
-                const defaultStationId = WAVEFORM_CONSTANTS.STATION.DEFAULT_ID; // Use default station
+                const defaultStationId = ES.STATION.DEFAULT_ID; // Use default station
 
                 // Update UI with default station
                 this.updateSelectedStationUI(defaultStationId);

@@ -18,6 +18,8 @@ class DataDisplay {
         const intensityElement = document.getElementById('val-int');
         if (intensityElement) {
             intensityElement.textContent = intensity.toFixed(1);
+            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
+            intensityElement.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
         }
 
         const pgaElement = document.getElementById('val-pga');
@@ -29,6 +31,20 @@ class DataDisplay {
         if (intensityLevelElement) {
             const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
             intensityLevelElement.textContent = level;
+            intensityLevelElement.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
+            intensityLevelElement.style.color = WAVEFORM_CONSTANTS.INTENSITY_TEXTS[level];
+        }
+
+        // Update card backgrounds
+        const cardInt = document.getElementById('card-int');
+        if (cardInt) {
+            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
+            cardInt.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
+        }
+        const cardIntLevel = document.getElementById('card-int-level');
+        if (cardIntLevel) {
+            const level = WAVEFORM_CONSTANTS.getIntensityLevel(intensity);
+            cardIntLevel.style.backgroundColor = WAVEFORM_CONSTANTS.INTENSITY_COLORS[level];
         }
 
         const timeElement = document.getElementById('val-time');
@@ -65,6 +81,7 @@ class DataDisplay {
         const intensityElement = document.getElementById('val-int');
         if (intensityElement) {
             intensityElement.textContent = '----';
+            intensityElement.style.color = '';
         }
 
         const pgaElement = document.getElementById('val-pga');
@@ -75,6 +92,18 @@ class DataDisplay {
         const intensityLevelElement = document.getElementById('val-int-level');
         if (intensityLevelElement) {
             intensityLevelElement.textContent = '--';
+            intensityLevelElement.style.backgroundColor = '';
+            intensityLevelElement.style.color = '';
+        }
+
+        // Reset card backgrounds
+        const cardInt = document.getElementById('card-int');
+        if (cardInt) {
+            cardInt.style.backgroundColor = '';
+        }
+        const cardIntLevel = document.getElementById('card-int-level');
+        if (cardIntLevel) {
+            cardIntLevel.style.backgroundColor = '';
         }
 
         const timeElement = document.getElementById('val-time');

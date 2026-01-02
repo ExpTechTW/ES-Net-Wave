@@ -7,8 +7,6 @@
     bottom: 0;
     background: #111;
     z-index: 10;
-    border-radius: 6px;
-    border: 1px solid #333;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -102,9 +100,10 @@
     position: absolute;
     right: 12px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) rotate(120deg);
     font-size: 14px;
     color: #fff;
+    transition: transform 0.3s ease;
 }
 
 .city-header:not(.expanded)::after {
@@ -112,9 +111,10 @@
     position: absolute;
     right: 12px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) rotate(0deg);
     font-size: 14px;
     color: #fff;
+    transition: transform 0.3s ease;
 }
 
 .city-stations {

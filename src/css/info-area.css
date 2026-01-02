@@ -91,6 +91,10 @@
     font-size: 18px;
 }
 
+#val-int-level {
+    font-size: 40px;
+}
+
 .selected-station-card {
     flex: 1;
     background: #1a1a1a;

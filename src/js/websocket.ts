@@ -36,6 +36,9 @@ class WSService {
     }
 
     connect() {
+        if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+            return;
+        }
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.log('Max reconnection attempts reached, stopping reconnection');
             this.sendToRenderer('connection-status', 'error');
@@ -130,7 +133,7 @@ class WSService {
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
 
-        if (this.ws) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.isManualReconnect = true;
             this.ws.close();
         }

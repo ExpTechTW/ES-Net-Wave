@@ -1,14 +1,18 @@
-const WaveformVisualizer = require('../js/visualization/waveform');
-const WSService = require('../js/websocket');
-const { StationSelector } = require('../js/ui/station-selector');
+import WaveformVisualizer from './visualization/waveform';
+import WSService from './websocket';
+import { StationSelector } from './ui/station-selector';
+import type { IpcRendererEvent } from 'electron';
+
+declare const require: any;
 const { ipcRenderer } = require('electron');
 
-let wsService;
-let stationSelector;
+let wsService: WSService | null = null;
+let stationSelector: StationSelector | null = null;
 
 function initializeApplication() {
     try {
         wsService = new WSService();
+        wsService.connect();
         window.wsService = wsService;
 
         window.waveformVisualizer = new WaveformVisualizer();
@@ -51,7 +55,7 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-ipcRenderer.on('set-station-request', (event, stationId) => {
+ipcRenderer.on('set-station-request', (event: IpcRendererEvent, stationId: string) => {
     if (wsService && typeof wsService.setStation === 'function') {
         wsService.setStation(stationId);
     }

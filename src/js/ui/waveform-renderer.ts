@@ -1,28 +1,30 @@
 // Waveform Renderer Module
 // Handles waveform visualization rendering
-const constants = require('../constants');
+import { WAVEFORM_CONSTANTS } from '../constants';
 
 class WaveformRenderer {
+    private ctxX: CanvasRenderingContext2D | null = null;
+    private ctxY: CanvasRenderingContext2D | null = null;
+    private ctxZ: CanvasRenderingContext2D | null = null;
+    private ctxTime: CanvasRenderingContext2D | null = null;
+    private maxPoints: number = WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
+    private animationId: number | null = null;
+    private isInitialized: boolean = false;
+
     constructor() {
-        this.ctxX = null;
-        this.ctxY = null;
-        this.ctxZ = null;
-        this.ctxTime = null;
-        this.maxPoints = constants.WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
-        this.animationId = null;
-        this.isInitialized = false;
+        // Constructor is empty as properties are initialized above
     }
 
     // Initialize renderer with canvas contexts
-    initialize(canvasX, canvasY, canvasZ, canvasTime) {
+    initialize(canvasX: HTMLElement | null, canvasY: HTMLElement | null, canvasZ: HTMLElement | null, canvasTime: HTMLElement | null) {
         if (canvasX && canvasY && canvasZ) {
-            this.ctxX = canvasX.getContext('2d');
-            this.ctxY = canvasY.getContext('2d');
-            this.ctxZ = canvasZ.getContext('2d');
-            this.ctxTime = canvasTime ? canvasTime.getContext('2d') : null;
+            this.ctxX = (canvasX as HTMLCanvasElement).getContext('2d');
+            this.ctxY = (canvasY as HTMLCanvasElement).getContext('2d');
+            this.ctxZ = (canvasZ as HTMLCanvasElement).getContext('2d');
+            this.ctxTime = canvasTime ? (canvasTime as HTMLCanvasElement).getContext('2d') : null;
 
             // Set canvas sizes
-            this.setCanvasSizes(canvasX, canvasY, canvasZ, canvasTime);
+            this.setCanvasSizes(canvasX as HTMLCanvasElement, canvasY as HTMLCanvasElement, canvasZ as HTMLCanvasElement, canvasTime as HTMLCanvasElement);
 
             this.isInitialized = true;
         } else {
@@ -31,7 +33,7 @@ class WaveformRenderer {
     }
 
     // Set canvas sizes
-    setCanvasSizes(canvasX, canvasY, canvasZ, canvasTime) {
+    setCanvasSizes(canvasX: HTMLElement | null, canvasY: HTMLElement | null, canvasZ: HTMLElement | null, canvasTime: HTMLElement | null) {
         const chartArea = document.getElementById('chart-area');
         if (!chartArea) return;
 
@@ -41,8 +43,8 @@ class WaveformRenderer {
 
         [canvasX, canvasY, canvasZ, canvasTime].forEach(canvas => {
             if (canvas) {
-                canvas.width = width;
-                canvas.height = perH;
+                (canvas as HTMLCanvasElement).width = width;
+                (canvas as HTMLCanvasElement).height = perH;
             }
         });
     }
@@ -57,7 +59,7 @@ class WaveformRenderer {
     }
 
     // Update waveform data and render
-    updateWaveformData(bufX, bufY, bufZ) {
+    updateWaveformData(bufX: number[], bufY: number[], bufZ: number[]) {
         if (!this.isInitialized) return;
 
         this.drawWaveforms(bufX, bufY, bufZ);
@@ -87,17 +89,17 @@ class WaveformRenderer {
     }
 
     // Draw all waveforms
-    drawWaveforms(bufX, bufY, bufZ) {
+    drawWaveforms(bufX: number[], bufY: number[], bufZ: number[]) {
         if (!this.ctxX || !this.ctxY || !this.ctxZ) return;
 
-        const canvasX = document.getElementById('waveform-x');
-        const canvasY = document.getElementById('waveform-y');
-        const canvasZ = document.getElementById('waveform-z');
+        const canvasX = document.getElementById('waveform-x') as HTMLCanvasElement;
+        const canvasY = document.getElementById('waveform-y') as HTMLCanvasElement;
+        const canvasZ = document.getElementById('waveform-z') as HTMLCanvasElement;
 
         if (!canvasX || !canvasY || !canvasZ) return;
 
-        const width = canvasX.width;
-        const height = canvasX.height;
+        const width = (canvasX as HTMLCanvasElement).width;
+        const height = (canvasX as HTMLCanvasElement).height;
 
         // Compute individual scales for each axis
         const scaleX = this.computeAxisScale(bufX);
@@ -107,13 +109,13 @@ class WaveformRenderer {
         const xStep = width / (this.maxPoints - 1);
 
         // Draw each axis with its individual scale
-        this.drawWaveformLine(this.ctxX, canvasX, bufX, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_X, xStep, (height / 2) / scaleX, height);
-        this.drawWaveformLine(this.ctxY, canvasY, bufY, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_Y, xStep, (height / 2) / scaleY, height);
-        this.drawWaveformLine(this.ctxZ, canvasZ, bufZ, constants.WAVEFORM_CONSTANTS.COLORS.WAVE_Z, xStep, (height / 2) / scaleZ, height);
+        this.drawWaveformLine(this.ctxX, canvasX, bufX, WAVEFORM_CONSTANTS.COLORS.WAVE_X, xStep, (height / 2) / scaleX, height);
+        this.drawWaveformLine(this.ctxY, canvasY, bufY, WAVEFORM_CONSTANTS.COLORS.WAVE_Y, xStep, (height / 2) / scaleY, height);
+        this.drawWaveformLine(this.ctxZ, canvasZ, bufZ, WAVEFORM_CONSTANTS.COLORS.WAVE_Z, xStep, (height / 2) / scaleZ, height);
 
         // Draw time axis if available
         if (this.ctxTime) {
-            const canvasTime = document.getElementById('time-axis');
+            const canvasTime = document.getElementById('time-axis') as HTMLCanvasElement;
             if (canvasTime) {
                 this.drawTimeAxis(this.ctxTime, canvasTime);
             }
@@ -121,19 +123,19 @@ class WaveformRenderer {
     }
 
     // Compute scale for a single axis
-    computeAxisScale(data) {
+    computeAxisScale(data: number[]): number {
         let maxVal = 0;
         for (let i = 0; i < this.maxPoints; i++) {
             const absVal = Math.abs(data[i] || 0);
             if (absVal > maxVal) maxVal = absVal;
         }
-        return Math.max(maxVal, constants.WAVEFORM_CONSTANTS.CANVAS.DEFAULT_SCALE) * 1.1;
+        return Math.max(maxVal, WAVEFORM_CONSTANTS.CANVAS.DEFAULT_SCALE) * 1.1;
     }
 
     // Draw a single waveform line
-    drawWaveformLine(ctx, canvas, data, color, step, scale, h) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        this.drawGrid(ctx, canvas.width, canvas.height);
+    drawWaveformLine(ctx: CanvasRenderingContext2D, canvas: HTMLElement, data: number[], color: string, step: number, scale: number, h: number) {
+        ctx.clearRect(0, 0, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height);
+        this.drawGrid(ctx, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height);
 
         ctx.beginPath();
         ctx.strokeStyle = color;
@@ -149,14 +151,14 @@ class WaveformRenderer {
     }
 
     // Draw grid lines
-    drawGrid(ctx, w, h) {
-        ctx.strokeStyle = constants.WAVEFORM_CONSTANTS.COLORS.GRID;
+    drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
+        ctx.strokeStyle = WAVEFORM_CONSTANTS.COLORS.GRID;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(0, h / 2);
         ctx.lineTo(w, h / 2);
-        for (let i = 1; i < constants.WAVEFORM_CONSTANTS.CANVAS.GRID_LINES; i++) {
-            const x = (w / constants.WAVEFORM_CONSTANTS.CANVAS.GRID_LINES) * i;
+        for (let i = 1; i < WAVEFORM_CONSTANTS.CANVAS.GRID_LINES; i++) {
+            const x = (w / WAVEFORM_CONSTANTS.CANVAS.GRID_LINES) * i;
             ctx.moveTo(x, 0);
             ctx.lineTo(x, h);
         }
@@ -164,14 +166,14 @@ class WaveformRenderer {
     }
 
     // Draw time axis
-    drawTimeAxis(ctx, canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawTimeAxis(ctx: CanvasRenderingContext2D, canvas: HTMLElement) {
+        ctx.clearRect(0, 0, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height);
         // Simple time axis - could be enhanced
         ctx.strokeStyle = '#444';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
-        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.moveTo(0, (canvas as HTMLCanvasElement).height / 2);
+        ctx.lineTo((canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height / 2);
         ctx.stroke();
     }
 
@@ -189,4 +191,4 @@ class WaveformRenderer {
     }
 }
 
-module.exports = WaveformRenderer;
+export default WaveformRenderer;

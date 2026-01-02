@@ -1,22 +1,20 @@
-const constants = require('../constants');
-const { ipcRenderer } = require('electron');
-const WaveformRenderer = require('../ui/waveform-renderer');
-const DataDisplay = require('../ui/data-display');
+import { WAVEFORM_CONSTANTS } from '../constants';
+import { ipcRenderer } from 'electron';
+import WaveformRenderer from '../ui/waveform-renderer';
+import DataDisplay from '../ui/data-display';
 
 class WaveformVisualizer {
-    constructor() {
-        this.maxPoints = constants.WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
-        this.bufX = new Array(this.maxPoints).fill(0);
-        this.bufY = new Array(this.maxPoints).fill(0);
-        this.bufZ = new Array(this.maxPoints).fill(0);
-        this.isInitialized = false;
-        this.isConnected = false;
-        this.lastDataTime = 0;
-        this.statusCheckInterval = null;
-        this.currentStation = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
-        this.renderer = new WaveformRenderer();
-        this.dataDisplay = new DataDisplay();
-    }
+    private maxPoints: number = WAVEFORM_CONSTANTS.CANVAS.MAX_POINTS;
+    private bufX: number[] = new Array(this.maxPoints).fill(0);
+    private bufY: number[] = new Array(this.maxPoints).fill(0);
+    private bufZ: number[] = new Array(this.maxPoints).fill(0);
+    private isInitialized: boolean = false;
+    private isConnected: boolean = false;
+    private lastDataTime: number = 0;
+    private statusCheckInterval: NodeJS.Timeout | null = null;
+    private currentStation: string = WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
+    private renderer: WaveformRenderer = new WaveformRenderer();
+    private dataDisplay: DataDisplay = new DataDisplay();
 
     initialize() {
         if (this.isInitialized) {
@@ -27,10 +25,10 @@ class WaveformVisualizer {
         this.dataDisplay.initialize();
         this.dataDisplay.initializeUI();
 
-        const canvasX = document.getElementById('waveform-x');
-        const canvasY = document.getElementById('waveform-y');
-        const canvasZ = document.getElementById('waveform-z');
-        const canvasTime = document.getElementById('time-axis');
+        const canvasX = document.getElementById('waveform-x') as HTMLCanvasElement;
+        const canvasY = document.getElementById('waveform-y') as HTMLCanvasElement;
+        const canvasZ = document.getElementById('waveform-z') as HTMLCanvasElement;
+        const canvasTime = document.getElementById('time-axis') as HTMLCanvasElement;
 
         this.renderer.initialize(canvasX, canvasY, canvasZ, canvasTime);
         this.renderer.startAnimation();
@@ -65,7 +63,7 @@ class WaveformVisualizer {
         }, 500);
     }
 
-    handleWebSocketMessage(data) {
+    handleWebSocketMessage(data: any) {
         this.lastDataTime = Date.now();
 
         const parts = data.split('~');
@@ -91,7 +89,7 @@ class WaveformVisualizer {
                 const intensity = dataView.getFloat32(9, true);
                 const pga = dataView.getFloat32(13, true);
 
-                this.dataDisplay.updateIntensityData(intensity, pga, ts);
+                this.dataDisplay.updateIntensityData(intensity, pga, Number(ts));
             } else if (msgType === 0x10) {
                 const count = bytes[1];
                 const xArr = [], yArr = [], zArr = [];
@@ -118,9 +116,9 @@ class WaveformVisualizer {
         }
     }
 
-    async changeStation(stationId) {
+    async changeStation(stationId: string) {
         this.setStation(stationId);
-        await this.setStationIPC(stationId);
+        await ipcRenderer.invoke('set-station', stationId);
     }
 
     clearWaveform() {
@@ -130,7 +128,7 @@ class WaveformVisualizer {
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     }
 
-    pushData(xArr, yArr, zArr) {
+    pushData(xArr: number[], yArr: number[], zArr: number[]) {
         if (!this.isInitialized) return;
 
         const len = xArr.length;
@@ -144,19 +142,12 @@ class WaveformVisualizer {
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     }
 
-    setStation(station) {
+    setStation(station: any) {
         this.currentStation = station;
         this.dataDisplay.updateStationInfo(station);
     }
 
-    clearWaveform() {
-        this.bufX.fill(0);
-        this.bufY.fill(0);
-        this.bufZ.fill(0);
-        this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
-    }
-
-    updateConnectionStatus(status) {
+    updateConnectionStatus(status: string) {
         this.isConnected = (status === 'connected');
         if (this.isConnected) {
             this.lastDataTime = Date.now();
@@ -189,4 +180,4 @@ class WaveformVisualizer {
     }
 }
 
-module.exports = WaveformVisualizer;
+export default WaveformVisualizer;

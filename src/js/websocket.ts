@@ -1,20 +1,34 @@
-const WebSocket = require('ws');
-const { ipcRenderer } = require('electron');
-const constants = require('../js/constants');
+import { ipcRenderer } from 'electron';
+import * as constants from './constants';
+
+interface NetStatus {
+    lastPktTime: number;
+    lastPktId: string;
+    pktCount: number;
+}
+
+interface State {
+    intensity: number;
+    pga: number;
+    ts: number;
+    tsStr: string;
+}
 
 class WSService {
-    constructor() {
-        this.ws = null;
-        this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
-        this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
-        this.deviceId = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
-        this.wsUrl = "wss://bamboo.exptech.dev/ws/eswave";
-        this.isManualReconnect = false;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 10;
-        this.baseReconnectDelay = 1000;
-        this.maxReconnectDelay = 30000;
+    private ws: WebSocket | null = null;
+    private netStatus: NetStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
+    private state: State = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
+    private deviceId: string = constants.WAVEFORM_CONSTANTS.STATION.DEFAULT_ID;
+    private currentStation: string = this.deviceId;
+    private wsUrl: string = "wss://bamboo.exptech.dev/ws/eswave";
+    private isManualReconnect: boolean = false;
+    private reconnectAttempts: number = 0;
+    private maxReconnectAttempts: number = 10;
+    private baseReconnectDelay: number = 1000;
+    private maxReconnectDelay: number = 30000;
+    private heartbeatInterval: NodeJS.Timeout | null = null;
 
+    constructor() {
         this.heartbeatInterval = setInterval(() => {
             const hb = this.getHeartbeat();
             this.sendToRenderer('server-heartbeat', hb);
@@ -32,32 +46,32 @@ class WSService {
 
         this.ws = new WebSocket(this.wsUrl);
 
-        this.ws.on('open', () => {
+        this.ws.addEventListener('open', () => {
             console.log('WebSocket connected');
             this.isManualReconnect = false;
             this.reconnectAttempts = 0;
             this.sendToRenderer('connection-status', 'connected');
-            this.ws.send(this.deviceId);
-        });
-
-        this.ws.on('message', (data, isBinary) => {
-            if (isBinary) {
-                this.handleMessage(data.toString('latin1'));
-            } else {
-                this.handleMessage(data.toString('utf8'));
+            if (this.ws) {
+                this.ws.send(this.currentStation);
             }
         });
 
-        this.ws.on('error', (error) => {
+        this.ws.addEventListener('message', (event) => {
+            const data = event.data;
+            this.handleMessage(typeof data === 'string' ? data : data.toString('latin1'));
+        });
+
+        this.ws.addEventListener('error', (error: Event) => {
             console.error('WebSocket error:', error);
             this.sendToRenderer('connection-status', 'error');
 
-            const isServerError = error.message && (
-                error.message.includes('522') ||
-                error.message.includes('502') ||
-                error.message.includes('503') ||
-                error.message.includes('504') ||
-                error.message.includes('Unexpected server response')
+            const errorEvent = error as ErrorEvent;
+            const isServerError = errorEvent.message && (
+                errorEvent.message.includes('522') ||
+                errorEvent.message.includes('502') ||
+                errorEvent.message.includes('503') ||
+                errorEvent.message.includes('504') ||
+                errorEvent.message.includes('Unexpected server response')
             );
 
             if (isServerError) {
@@ -71,7 +85,7 @@ class WSService {
             }
         });
 
-        this.ws.on('close', () => {
+        this.ws.addEventListener('close', () => {
             console.log('WebSocket closed');
             this.sendToRenderer('connection-status', 'disconnected');
 
@@ -81,7 +95,7 @@ class WSService {
         });
     }
 
-    handleMessage(message) {
+    handleMessage(message: string) {
         try {
             this.sendToRenderer('ws-message', message);
             this.sendToRenderer('connection-status', 'connected');
@@ -90,7 +104,7 @@ class WSService {
         }
     }
 
-    sendToRenderer(channel, data) {
+    sendToRenderer(channel: string, data: any) {
         try {
             ipcRenderer.send('ws-message-to-main', { channel, data });
         } catch (error) {
@@ -103,24 +117,22 @@ class WSService {
         return { count: isActive ? this.netStatus.pktCount : 0, lastId: this.netStatus.lastPktId };
     }
 
-    setStation(stationId) {
-        const wasChanged = this.deviceId !== stationId;
+    setStation(stationId: string) {
+        const wasChanged = this.currentStation !== stationId;
 
         if (wasChanged) {
-            console.log(`Switching station from ${this.deviceId} to ${stationId}`);
+            console.log(`Switching station from ${this.currentStation} to ${stationId}`);
         }
 
-        this.deviceId = stationId;
+        this.currentStation = stationId;
         this.reconnectAttempts = 0;
 
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
 
-        if (this.ws) {
-            this.isManualReconnect = true;
-            this.ws.close();
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(stationId);
         }
-        this.connect();
     }
 
     destroy() {
@@ -136,4 +148,4 @@ class WSService {
     }
 }
 
-module.exports = WSService;
+export default WSService;

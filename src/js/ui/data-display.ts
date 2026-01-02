@@ -15,7 +15,7 @@ class DataDisplay {
     updateIntensityData(intensity: number, pga: number, timestamp: number) {
         if (!this.isInitialized) return;
 
-        const intensityElement = document.getElementById('val-int');
+        const intensityElement = document.getElementById('val-int') as HTMLElement;
         if (intensityElement) {
             intensityElement.textContent = intensity.toFixed(1);
             const level = ES.getIntensityLevel(intensity);
@@ -27,7 +27,7 @@ class DataDisplay {
             pgaElement.textContent = pga.toFixed(2);
         }
 
-        const intensityLevelElement = document.getElementById('val-int-level');
+        const intensityLevelElement = document.getElementById('val-int-level') as HTMLElement;
         if (intensityLevelElement) {
             const level = ES.getIntensityLevel(intensity);
             intensityLevelElement.textContent = level;
@@ -36,20 +36,20 @@ class DataDisplay {
         }
 
         // Update card backgrounds
-        const cardInt = document.getElementById('card-int');
+        const cardInt = document.getElementById('card-int') as HTMLElement;
         if (cardInt) {
             const level = ES.getIntensityLevel(intensity);
             cardInt.style.backgroundColor = ES.INTENSITY_COLORS[level];
-            const label = cardInt.querySelector('.label');
+            const label = cardInt.querySelector('.label') as HTMLElement;
             if (label) {
                 label.style.color = ES.INTENSITY_TEXTS[level];
             }
         }
-        const cardIntLevel = document.getElementById('card-int-level');
+        const cardIntLevel = document.getElementById('card-int-level') as HTMLElement;
         if (cardIntLevel) {
             const level = ES.getIntensityLevel(intensity);
             cardIntLevel.style.backgroundColor = ES.INTENSITY_COLORS[level];
-            const label = cardIntLevel.querySelector('.label');
+            const label = cardIntLevel.querySelector('.label') as HTMLElement;
             if (label) {
                 label.style.color = ES.INTENSITY_TEXTS[level];
             }
@@ -86,7 +86,7 @@ class DataDisplay {
     }
 
     resetDisplay() {
-        const intensityElement = document.getElementById('val-int');
+        const intensityElement = document.getElementById('val-int') as HTMLElement;
         if (intensityElement) {
             intensityElement.textContent = '----';
             intensityElement.style.color = '';
@@ -97,7 +97,7 @@ class DataDisplay {
             pgaElement.textContent = '----';
         }
 
-        const intensityLevelElement = document.getElementById('val-int-level');
+        const intensityLevelElement = document.getElementById('val-int-level') as HTMLElement;
         if (intensityLevelElement) {
             intensityLevelElement.textContent = '--';
             intensityLevelElement.style.backgroundColor = '';
@@ -105,18 +105,18 @@ class DataDisplay {
         }
 
         // Reset card backgrounds
-        const cardInt = document.getElementById('card-int');
+        const cardInt = document.getElementById('card-int') as HTMLElement;
         if (cardInt) {
             cardInt.style.backgroundColor = '';
-            const label = cardInt.querySelector('.label');
+            const label = cardInt.querySelector('.label') as HTMLElement;
             if (label) {
                 label.style.color = '';
             }
         }
-        const cardIntLevel = document.getElementById('card-int-level');
+        const cardIntLevel = document.getElementById('card-int-level') as HTMLElement;
         if (cardIntLevel) {
             cardIntLevel.style.backgroundColor = '';
-            const label = cardIntLevel.querySelector('.label');
+            const label = cardIntLevel.querySelector('.label') as HTMLElement;
             if (label) {
                 label.style.color = '';
             }

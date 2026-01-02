@@ -48,7 +48,7 @@ export const ES = {
         '6-': '#FF0000',
         '6+': '#C00000',
         '7': '#9600C8'
-    },
+    } as { [key: string]: string },
     INTENSITY_TEXTS: {
         '0': '#FFFFFF',
         '1': '#FFFFFF',
@@ -60,7 +60,7 @@ export const ES = {
         '6-': '#FFFFFF',
         '6+': '#FFFFFF',
         '7': '#FFFFFF'
-    },
+    } as { [key: string]: string },
     getIntensityLevel: function(intensity: number): string {
         if (intensity < 0.5) return '0';
         if (intensity < 1.5) return '1';

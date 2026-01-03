@@ -14,9 +14,18 @@
     <div id="widget-container">
         <div id="chart-area">
             <div id="wave-canvases">
-                <canvas id="waveform-x" class="wave-canvas"></canvas>
-                <canvas id="waveform-y" class="wave-canvas"></canvas>
-                <canvas id="waveform-z" class="wave-canvas"></canvas>
+                <div class="waveform-container">
+                    <div class="axis-label" id="label-x">ELE</div>
+                    <canvas id="waveform-x" class="wave-canvas"></canvas>
+                </div>
+                <div class="waveform-container">
+                    <div class="axis-label" id="label-y">ELN</div>
+                    <canvas id="waveform-y" class="wave-canvas"></canvas>
+                </div>
+                <div class="waveform-container">
+                    <div class="axis-label" id="label-z">ELZ</div>
+                    <canvas id="waveform-z" class="wave-canvas"></canvas>
+                </div>
                 <canvas id="time-axis" class="time-axis-canvas"></canvas>
             </div>
         </div>

@@ -2,6 +2,7 @@ import { ES } from '../constants';
 import { ipcRenderer } from 'electron';
 import WaveformRenderer from '../ui/waveform-renderer';
 import DataDisplay from '../ui/data-display';
+import { FilterManager } from '../utils/filter';
 
 class WaveformVisualizer {
     private maxPoints: number = ES.CANVAS.MAX_POINTS;
@@ -15,6 +16,7 @@ class WaveformVisualizer {
     private currentStation: string = ES.STATION.DEFAULT_ID;
     private renderer: WaveformRenderer = new WaveformRenderer();
     private dataDisplay: DataDisplay = new DataDisplay();
+    private filterManager: FilterManager = new FilterManager();
 
     initialize() {
         if (this.isInitialized) {
@@ -118,6 +120,8 @@ class WaveformVisualizer {
 
     async changeStation(stationId: string) {
         this.setStation(stationId);
+        // Reset filter state when changing stations
+        this.filterManager.resetFilter(stationId);
         await ipcRenderer.invoke('set-station', stationId);
     }
 
@@ -125,6 +129,8 @@ class WaveformVisualizer {
         this.bufX.fill(0);
         this.bufY.fill(0);
         this.bufZ.fill(0);
+        // Reset filter state when clearing waveform
+        this.filterManager.resetFilter(this.currentStation);
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     }
 
@@ -132,12 +138,22 @@ class WaveformVisualizer {
         if (!this.isInitialized) return;
 
         const len = xArr.length;
+
+        // Apply filtering to each axis with separate filter instances
+        const filterX = this.filterManager.getFilter(this.currentStation, 'x');
+        const filterY = this.filterManager.getFilter(this.currentStation, 'y');
+        const filterZ = this.filterManager.getFilter(this.currentStation, 'z');
+
+        const filteredX = xArr.map(x => filterX.filter(x));
+        const filteredY = yArr.map(y => filterY.filter(y));
+        const filteredZ = zArr.map(z => filterZ.filter(z));
+
         this.bufX.splice(0, len);
-        this.bufX.push(...xArr);
+        this.bufX.push(...filteredX);
         this.bufY.splice(0, len);
-        this.bufY.push(...yArr);
+        this.bufY.push(...filteredY);
         this.bufZ.splice(0, len);
-        this.bufZ.push(...zArr);
+        this.bufZ.push(...filteredZ);
 
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     }

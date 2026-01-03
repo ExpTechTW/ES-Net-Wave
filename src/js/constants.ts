@@ -1,11 +1,10 @@
 export const ES = {
     CANVAS: {
         MAX_POINTS: 6000,
-        GRID_LINES: 6,
         TIME_INTERVAL: 10,
         SAMPLE_RATE: 0.02,
         MARGIN: 20,
-        DEFAULT_SCALE: 1.0
+        DEFAULT_SCALE: 0
     },
     DATA: {
         BUFFER_SIZE: 6000,

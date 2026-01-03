@@ -6,9 +6,9 @@ import { FilterManager } from '../utils/filter';
 
 class WaveformVisualizer {
     private maxPoints: number = ES.CANVAS.MAX_POINTS;
-    private bufX: number[] = new Array(this.maxPoints).fill(0);
-    private bufY: number[] = new Array(this.maxPoints).fill(0);
-    private bufZ: number[] = new Array(this.maxPoints).fill(0);
+    private bufX: number[] = new Array(this.maxPoints).fill(NaN);
+    private bufY: number[] = new Array(this.maxPoints).fill(NaN);
+    private bufZ: number[] = new Array(this.maxPoints).fill(NaN);
     private isInitialized: boolean = false;
     private isConnected: boolean = false;
     private lastDataTime: number = 0;
@@ -34,6 +34,7 @@ class WaveformVisualizer {
 
         this.renderer.initialize(canvasX, canvasY, canvasZ, canvasTime);
         this.renderer.startAnimation();
+        this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
         this.isInitialized = true;
 
         this.setupIPCHandlers();
@@ -120,15 +121,16 @@ class WaveformVisualizer {
 
     async changeStation(stationId: string) {
         this.setStation(stationId);
+        this.clearWaveform();
         // Reset filter state when changing stations
         this.filterManager.resetFilter(stationId);
         await ipcRenderer.invoke('set-station', stationId);
     }
 
     clearWaveform() {
-        this.bufX.fill(0);
-        this.bufY.fill(0);
-        this.bufZ.fill(0);
+        this.bufX.fill(NaN);
+        this.bufY.fill(NaN);
+        this.bufZ.fill(NaN);
         // Reset filter state when clearing waveform
         this.filterManager.resetFilter(this.currentStation);
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);

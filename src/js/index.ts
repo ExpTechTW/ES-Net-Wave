@@ -1,3 +1,4 @@
+console.log('Application Starting');
 import WaveformVisualizer from './visualization/waveform';
 import WSService from './websocket';
 import { StationSelector } from './ui/station-selector';

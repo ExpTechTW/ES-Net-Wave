@@ -126,25 +126,36 @@ class WaveformRenderer {
     computeAxisScale(data: number[]): number {
         let maxVal = 0;
         for (let i = 0; i < this.maxPoints; i++) {
-            const absVal = Math.abs(data[i] || 0);
-            if (absVal > maxVal) maxVal = absVal;
+            const val = data[i];
+            if (!Number.isNaN(val)) {
+                const absVal = Math.abs(val);
+                if (absVal > maxVal) maxVal = absVal;
+            }
         }
         return Math.max(maxVal, ES.CANVAS.DEFAULT_SCALE) * 1.1;
     }
 
     // Draw a single waveform line
     drawWaveformLine(ctx: CanvasRenderingContext2D, canvas: HTMLElement, data: number[], color: string, step: number, scale: number, h: number) {
-        ctx.clearRect(0, 0, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height);
-        this.drawGrid(ctx, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height);
+        const canvasEl = canvas as HTMLCanvasElement;
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        this.drawGrid(ctx, canvasEl.width, canvasEl.height);
+
+        // Check if all data is NaN (no data to display)
+        const hasValidData = data.some(val => !Number.isNaN(val));
+        if (!hasValidData) return;
 
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.5;
 
         for (let i = 0; i < this.maxPoints; i++) {
+            const val = data[i];
+            if (Number.isNaN(val)) continue;
+
             const x = i * step;
-            const y = (h / 2) - ((data[i] || 0) * scale);
-            if (i === 0) ctx.moveTo(x, y);
+            const y = (h / 2) - (val * scale);
+            if (i === 0 || Number.isNaN(data[i-1])) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         }
         ctx.stroke();
@@ -155,13 +166,14 @@ class WaveformRenderer {
         ctx.strokeStyle = ES.COLORS.GRID;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(0, h / 2);
-        ctx.lineTo(w, h / 2);
-        for (let i = 1; i < ES.CANVAS.GRID_LINES; i++) {
-            const x = (w / ES.CANVAS.GRID_LINES) * i;
+
+        // Draw 12 vertical grid lines (including borders)
+        for (let i = 0; i <= 12; i++) {
+            const x = (w / 12) * i;
             ctx.moveTo(x, 0);
             ctx.lineTo(x, h);
         }
+
         ctx.stroke();
     }
 

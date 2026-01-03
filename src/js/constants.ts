@@ -23,11 +23,6 @@ export const ES = {
         TRAFFIC_ACTIVE: '#0f0',
         TRAFFIC_IDLE: '#555'
     },
-    UI: {
-        FONT: '10px monospace',
-        LAYOUT_CHECK_INTERVAL: 500,
-        RESIZE_THRESHOLD: 5
-    },
     PGA_THRESHOLDS: {
         CRITICAL: 8.0,
         WARNING: 2.5,

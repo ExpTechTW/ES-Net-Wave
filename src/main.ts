@@ -4,6 +4,20 @@ import * as path from 'path';
 let mainWindow: BrowserWindow | null = null;
 let dataService: any;
 
+// multiple
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
+}
+
 function initializeWaveformVisualizer() {
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('initialize-waveform');

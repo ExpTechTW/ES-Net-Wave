@@ -94,8 +94,13 @@
 #val-int {
     font-size: 40px;
 }
+
 #val-int-level {
     font-size: 40px;
+}
+
+#val-pga {
+    font-size: 30px;
 }
 
 .selected-station-card {

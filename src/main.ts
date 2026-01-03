@@ -4,19 +4,7 @@ import * as path from 'path';
 let mainWindow: BrowserWindow | null = null;
 let dataService: any;
 
-// multiple
 const gotTheLock = app.requestSingleInstanceLock();
-
-if (!gotTheLock) {
-    app.quit();
-} else {
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
-        if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.focus();
-        }
-    });
-}
 
 function initializeWaveformVisualizer() {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -32,6 +20,7 @@ function createWindow() {
         resizable: false,
         maximizable: false,
         fullscreenable: false,
+        show: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -43,44 +32,60 @@ function createWindow() {
     });
     mainWindow.setMenu(null);
     mainWindow.loadFile(path.join(app.getAppPath(), 'src', 'view', 'index.html'));
+
+    mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow!.show();
+    });
+
     mainWindow.on('closed', () => mainWindow = null);
 }
 
-app.whenReady().then(() => {
-    createWindow();
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
 
-    mainWindow!.webContents.on('dom-ready', () => {
-        mainWindow!.webContents.removeAllListeners('before-input-event');
+    app.whenReady().then(() => {
+        createWindow();
 
-        mainWindow!.webContents.on('before-input-event', (event, input) => {
-            if (
-                (input.control || input.meta) &&
-                ['+', '-', '=', '0'].includes(input.key)
-            ) {
-                event.preventDefault();
-            }
-            if (input.key === 'F12') {
-                event.preventDefault();
-                mainWindow!.webContents.openDevTools();
-            }
-            if (input.control && input.key === 'r') {
-                event.preventDefault();
-                mainWindow!.webContents.reloadIgnoringCache();
-            }
+        mainWindow!.webContents.on('dom-ready', () => {
+            mainWindow!.webContents.removeAllListeners('before-input-event');
+
+            mainWindow!.webContents.on('before-input-event', (event, input) => {
+                if (
+                    (input.control || input.meta) &&
+                    ['+', '-', '=', '0'].includes(input.key)
+                ) {
+                    event.preventDefault();
+                }
+                if (input.key === 'F12') {
+                    event.preventDefault();
+                    mainWindow!.webContents.openDevTools();
+                }
+                if (input.control && input.key === 'r') {
+                    event.preventDefault();
+                    mainWindow!.webContents.reloadIgnoringCache();
+                }
+            });
+
+            initializeWaveformVisualizer();
         });
 
-        initializeWaveformVisualizer();
-    });
+        ipcMain.handle('set-station', (event, stationId) => {
+            mainWindow!.webContents.send('set-station-request', stationId);
+            return true;
+        });
 
-    ipcMain.handle('set-station', (event, stationId) => {
-        mainWindow!.webContents.send('set-station-request', stationId);
-        return true;
+        ipcMain.on('ws-message-to-main', (event, { channel, data }) => {
+            mainWindow!.webContents.send(channel, data);
+        });
     });
-
-    ipcMain.on('ws-message-to-main', (event, { channel, data }) => {
-        mainWindow!.webContents.send(channel, data);
-    });
-});
+}
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();

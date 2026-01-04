@@ -305,6 +305,11 @@ class StationSelector {
             window.waveformVisualizer.clearWaveform();
         }
 
+        // Reset data display to default values when switching stations
+        if (window.waveformVisualizer && typeof window.waveformVisualizer.resetDataDisplay === 'function') {
+            window.waveformVisualizer.resetDataDisplay();
+        }
+
         // Notify WebSocket service to switch station
         if (window.wsService && typeof window.wsService.setStation === 'function') {
             window.wsService.setStation(stationId);

@@ -45,7 +45,10 @@ class WSService {
             return;
         }
 
-        this.sendToRenderer('connection-status', 'connecting');
+        // Only send connecting status if not manually reconnecting (to avoid duplicate status)
+        if (!this.isManualReconnect) {
+            this.sendToRenderer('connection-status', 'connecting');
+        }
 
         this.ws = new WebSocket(this.wsUrl);
 
@@ -90,7 +93,10 @@ class WSService {
 
         this.ws.addEventListener('close', () => {
             console.log('WebSocket closed');
-            this.sendToRenderer('connection-status', 'disconnected');
+            // Only send disconnected status if not manually reconnecting
+            if (!this.isManualReconnect) {
+                this.sendToRenderer('connection-status', 'disconnected');
+            }
 
             if (!this.isManualReconnect) {
                 setTimeout(() => this.connect(), this.baseReconnectDelay);
@@ -132,6 +138,9 @@ class WSService {
 
         this.netStatus = { lastPktTime: 0, lastPktId: "None", pktCount: 0 };
         this.state = { intensity: 0.0, pga: 0.0, ts: 0, tsStr: "Waiting..." };
+
+        // Send connecting status immediately when switching stations
+        this.sendToRenderer('connection-status', 'connecting');
 
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.isManualReconnect = true;

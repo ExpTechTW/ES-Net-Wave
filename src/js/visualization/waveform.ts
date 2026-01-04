@@ -136,6 +136,10 @@ class WaveformVisualizer {
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     }
 
+    resetDataDisplay() {
+        this.dataDisplay.resetDisplay();
+    }
+
     pushData(xArr: number[], yArr: number[], zArr: number[]) {
         if (!this.isInitialized) return;
 

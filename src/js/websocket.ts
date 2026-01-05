@@ -29,6 +29,9 @@ class WSService {
     private heartbeatInterval: NodeJS.Timeout | null = null;
 
     constructor() {
+        const savedStationId = localStorage.getItem('selectedStationId');
+        this.currentStation = savedStationId || constants.ES.STATION.DEFAULT_ID;
+
         this.heartbeatInterval = setInterval(() => {
             const hb = this.getHeartbeat();
             this.sendToRenderer('server-heartbeat', hb);

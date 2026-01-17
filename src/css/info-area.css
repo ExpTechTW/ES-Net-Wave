@@ -91,6 +91,16 @@
     font-size: 18px;
 }
 
+#card-error {
+    flex: 0 0 20px;
+    justify-content: center;
+}
+
+#val-error {
+    font-family: 'Segoe UI', 'SF Pro Rounded', sans-serif;
+    font-size: 18px;
+}
+
 #val-int {
     font-size: 40px;
 }

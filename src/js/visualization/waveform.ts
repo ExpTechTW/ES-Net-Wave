@@ -18,6 +18,8 @@ class WaveformVisualizer {
     private renderer: WaveformRenderer = new WaveformRenderer();
     private dataDisplay: DataDisplay = new DataDisplay();
     private filterManager: FilterManager = new FilterManager();
+    private totalMessages: number = 0;
+    private validMessages: number = 0;
 
     initialize() {
         if (this.isInitialized) {
@@ -38,6 +40,7 @@ class WaveformVisualizer {
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
         this.isInitialized = true;
 
+        this.resetStats();
         this.setupIPCHandlers();
     }
 
@@ -69,23 +72,30 @@ class WaveformVisualizer {
 
     handleWebSocketMessage(data: any) {
         this.lastDataTime = Date.now();
+        this.totalMessages++;
 
         const parsed = parseWebSocketMessage(data, this.currentStation);
-        if (!parsed) return;
 
-        if (parsed.type === 'intensity' && parsed.intensityData) {
-            this.dataDisplay.updateIntensityData(
-                parsed.intensityData.intensity,
-                parsed.intensityData.pga,
-                parsed.intensityData.timestamp
-            );
-        } else if (parsed.type === 'sensor' && parsed.sensorData) {
-            this.pushData(
-                parsed.sensorData.x,
-                parsed.sensorData.y,
-                parsed.sensorData.z
-            );
+        if (parsed) {
+            this.validMessages++;
+
+            if (parsed.type === 'intensity' && parsed.intensityData) {
+                this.dataDisplay.updateIntensityData(
+                    parsed.intensityData.intensity,
+                    parsed.intensityData.pga,
+                    parsed.intensityData.timestamp
+                );
+            } else if (parsed.type === 'sensor' && parsed.sensorData) {
+                this.pushData(
+                    parsed.sensorData.x,
+                    parsed.sensorData.y,
+                    parsed.sensorData.z
+                );
+            }
         }
+
+        const errorRate = this.totalMessages > 0 ? ((this.totalMessages - this.validMessages) / this.totalMessages) * 100 : 0;
+        this.dataDisplay.updateErrorRate(errorRate);
     }
 
     async changeStation(stationId: string) {
@@ -103,6 +113,12 @@ class WaveformVisualizer {
         // Reset filter state when clearing waveform
         this.filterManager.resetFilter(this.currentStation);
         this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
+    }
+
+    resetStats() {
+        this.totalMessages = 0;
+        this.validMessages = 0;
+        this.dataDisplay.updateErrorRate(0);
     }
 
     resetDataDisplay() {

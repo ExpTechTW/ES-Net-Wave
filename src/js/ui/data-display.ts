@@ -197,6 +197,15 @@ class DataDisplay {
         }
     }
 
+    updateErrorRate(errorRate: number) {
+        if (!this.isInitialized) return;
+
+        const errorElement = document.getElementById('val-error');
+        if (errorElement) {
+            errorElement.textContent = `錯誤率：${errorRate.toFixed(1)}%`;
+        }
+    }
+
     destroy() {
         this.isInitialized = false;
     }

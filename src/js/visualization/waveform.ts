@@ -3,6 +3,7 @@ import { ipcRenderer } from 'electron';
 import WaveformRenderer from '../ui/waveform-renderer';
 import DataDisplay from '../ui/data-display';
 import { FilterManager } from '../utils/filter';
+import { parseWebSocketMessage, ParsedMessage } from '../utils/data-parser';
 
 class WaveformVisualizer {
     private maxPoints: number = ES.CANVAS.MAX_POINTS;
@@ -69,53 +70,21 @@ class WaveformVisualizer {
     handleWebSocketMessage(data: any) {
         this.lastDataTime = Date.now();
 
-        const parts = data.split('~');
-        if (parts.length < 4) return;
+        const parsed = parseWebSocketMessage(data, this.currentStation);
+        if (!parsed) return;
 
-        const stationId = parts[0];
-        if (stationId !== this.currentStation) return;
-
-        try {
-            const payload = parts[2];
-            const binaryString = atob(payload);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-
-            if (bytes.length < 1) return;
-            const msgType = bytes[0];
-
-            if (msgType === 0x11) {
-                const dataView = new DataView(bytes.buffer);
-                const ts = dataView.getBigUint64(1, true);
-                const intensity = dataView.getFloat32(9, true);
-                const pga = dataView.getFloat32(13, true);
-
-                this.dataDisplay.updateIntensityData(intensity, pga, Number(ts));
-            } else if (msgType === 0x10) {
-                const count = bytes[1];
-                const xArr = [], yArr = [], zArr = [];
-                let offset = 10;
-
-                for (let i = 0; i < count; i++) {
-                    if (offset + 12 > bytes.length) break;
-                    const dataView = new DataView(bytes.buffer);
-                    const x = dataView.getFloat32(offset, true);
-                    const y = dataView.getFloat32(offset + 4, true);
-                    const z = dataView.getFloat32(offset + 8, true);
-                    xArr.push(x);
-                    yArr.push(y);
-                    zArr.push(z);
-                    offset += 12;
-                }
-
-                if (xArr.length > 0) {
-                    this.pushData(xArr, yArr, zArr);
-                }
-            }
-        } catch (error) {
-            console.error('Error parsing message:', error);
+        if (parsed.type === 'intensity' && parsed.intensityData) {
+            this.dataDisplay.updateIntensityData(
+                parsed.intensityData.intensity,
+                parsed.intensityData.pga,
+                parsed.intensityData.timestamp
+            );
+        } else if (parsed.type === 'sensor' && parsed.sensorData) {
+            this.pushData(
+                parsed.sensorData.x,
+                parsed.sensorData.y,
+                parsed.sensorData.z
+            );
         }
     }
 

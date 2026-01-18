@@ -13,6 +13,7 @@ function initializeWaveformVisualizer() {
 }
 
 function createWindow() {
+  const iconPath = process.platform === "win32" ? "app.ico" : "app.png";
   mainWindow = new BrowserWindow({
     title: `ES-Net-Wave v${app.getVersion()}`,
     width: 828,
@@ -28,7 +29,7 @@ function createWindow() {
       backgroundThrottling: false,
       offscreen: false,
     },
-    icon: path.join(__dirname, "..", "app.ico"),
+    icon: path.join(__dirname, "..", iconPath),
   });
   mainWindow.setMenu(null);
   mainWindow.loadFile(path.join(app.getAppPath(), "src", "view", "index.html"));

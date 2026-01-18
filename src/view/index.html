@@ -1,73 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://raw.githubusercontent.com wss://bamboo.exptech.dev;"
+    />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/info-area.css" />
+    <link rel="stylesheet" href="../css/station-selector.css" />
+  </head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://raw.githubusercontent.com wss://bamboo.exptech.dev;">
-    <link rel="stylesheet" href="../css/base.css">
-    <link rel="stylesheet" href="../css/info-area.css">
-    <link rel="stylesheet" href="../css/station-selector.css">
-</head>
-
-<body>
+  <body>
     <div id="widget-container">
-        <div id="chart-area">
-            <div id="wave-canvases">
-                <div class="waveform-container">
-                    <div class="axis-label" id="label-x">ELE</div>
-                    <canvas id="waveform-x" class="wave-canvas"></canvas>
-                </div>
-                <div class="waveform-container">
-                    <div class="axis-label" id="label-y">ELN</div>
-                    <canvas id="waveform-y" class="wave-canvas"></canvas>
-                </div>
-                <div class="waveform-container">
-                    <div class="axis-label" id="label-z">ELZ</div>
-                    <canvas id="waveform-z" class="wave-canvas"></canvas>
-                </div>
-            </div>
+      <div id="chart-area">
+        <div id="wave-canvases">
+          <div class="waveform-container">
+            <div class="axis-label" id="label-x">ELE</div>
+            <canvas id="waveform-x" class="wave-canvas"></canvas>
+          </div>
+          <div class="waveform-container">
+            <div class="axis-label" id="label-y">ELN</div>
+            <canvas id="waveform-y" class="wave-canvas"></canvas>
+          </div>
+          <div class="waveform-container">
+            <div class="axis-label" id="label-z">ELZ</div>
+            <canvas id="waveform-z" class="wave-canvas"></canvas>
+          </div>
         </div>
-        <div id="info-area">
-            <div id="default-cards">
-                <div class="card" id="card-status">
-                    <div class="value" id="val-status">🔄 Connecting</div>
-                </div>
-                <div class="card" id="card-station">
-                    <div class="value" id="val-station">-----</div>
-                </div>
-                <div class="card" id="card-area">
-                    <div class="value" id="val-area">--- ---</div>
-                </div>
-                <div class="card" id="card-error">
-                    <div class="value" id="val-error">錯誤率：-.-%</div>
-                </div>
-                <div class="card" id="card-int">
-                    <div class="label">Intensity</div>
-                    <div class="value" id="val-int">----</div>
-                </div>
-                <div class="card" id="card-int-level">
-                    <div class="label">Intensity Level</div>
-                    <div class="value" id="val-int-level">--</div>
-                </div>
-                <div class="card" id="card-pga">
-                    <div class="label">PGA</div>
-                    <div class="value" id="val-pga">----</div>
-                </div>
-                <div class="card" id="card-time">
-                    <div class="value" id="val-time">----/--/--<br>--:--:--</div>
-                </div>
-            </div>
+      </div>
+      <div id="info-area">
+        <div id="default-cards">
+          <div class="card" id="card-status">
+            <div class="value" id="val-status">🔄 Connecting</div>
+          </div>
+          <div class="card" id="card-station">
+            <div class="value" id="val-station">-----</div>
+          </div>
+          <div class="card" id="card-area">
+            <div class="value" id="val-area">--- ---</div>
+          </div>
+          <div class="card" id="card-error">
+            <div class="value" id="val-error">錯誤率：-.-%</div>
+          </div>
+          <div class="card" id="card-int">
+            <div class="label">Intensity</div>
+            <div class="value" id="val-int">----</div>
+          </div>
+          <div class="card" id="card-int-level">
+            <div class="label">Intensity Level</div>
+            <div class="value" id="val-int-level">--</div>
+          </div>
+          <div class="card" id="card-pga">
+            <div class="label">PGA</div>
+            <div class="value" id="val-pga">----</div>
+          </div>
+          <div class="card" id="card-time">
+            <div class="value" id="val-time">----/--/--<br />--:--:--</div>
+          </div>
+        </div>
 
-            <div id="station-selection" class="station-selection" style="display: none;">
-                <div id="station-list" class="station-list">
-                </div>
-            </div>
+        <div
+          id="station-selection"
+          class="station-selection"
+          style="display: none"
+        >
+          <div id="station-list" class="station-list"></div>
         </div>
-        <script src="../../dist/js/index.js"></script>
+      </div>
+      <script src="../../dist/js/index.js"></script>
     </div>
-</body>
-
+  </body>
 </html>

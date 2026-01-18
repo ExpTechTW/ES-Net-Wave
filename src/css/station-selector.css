@@ -1,182 +1,185 @@
 .station-selection {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #111;
-    z-index: 10;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #111;
+  z-index: 10;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .station-selection.show {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .station-list {
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .station-list::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .station-card {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #fff;
-    font-family: 'Segoe UI', sans-serif;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
 }
 
 .station-card:hover {
-    background: #2a2a2a;
-    border-color: #555;
-    transform: translateY(-1px);
+  background: #2a2a2a;
+  border-color: #555;
+  transform: translateY(-1px);
 }
 
 .station-card-id {
-    font-weight: bold;
-    font-family: 'Consolas', monospace;
-    font-size: 14px;
-    color: #00ff88;
-    margin-bottom: 4px;
-    text-align: center;
+  font-weight: bold;
+  font-family: "Consolas", monospace;
+  font-size: 14px;
+  color: #00ff88;
+  margin-bottom: 4px;
+  text-align: center;
 }
 
 .station-card-location {
-    font-size: 12px;
-    color: #ccc;
-    text-align: center;
+  font-size: 12px;
+  color: #ccc;
+  text-align: center;
 }
 
 /* City grouping styles */
 .city-header {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 12px 18px;
-    margin-bottom: 4px;
-    cursor: pointer;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    text-align: center;
-    position: relative;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px 18px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  text-align: center;
+  position: relative;
 }
 
 .city-header:hover {
-    background: #2a2a2a;
-    border-color: #555;
+  background: #2a2a2a;
+  border-color: #555;
 }
 
 .city-header.expanded {
-    background: #2a2a2a;
-    border-color: #555;
+  background: #2a2a2a;
+  border-color: #555;
 }
 
 .city-header.selected {
-    border-color: #00bbff;
+  border-color: #00bbff;
 }
 
 .city-header.expanded::after {
-    content: '▼';
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%) rotate(120deg);
-    font-size: 14px;
-    color: #fff;
-    transition: transform 0.3s ease;
+  content: "▼";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%) rotate(120deg);
+  font-size: 14px;
+  color: #fff;
+  transition: transform 0.3s ease;
 }
 
 .city-header:not(.expanded)::after {
-    content: '▶';
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%) rotate(0deg);
-    font-size: 14px;
-    color: #fff;
-    transition: transform 0.3s ease;
+  content: "▶";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size: 14px;
+  color: #fff;
+  transition: transform 0.3s ease;
 }
 
 .city-stations {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 4px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 6px;
-    padding: 0 4px;
-    opacity: 0;
-    transform: translateY(-10px);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 4px;
+  max-height: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  padding: 0 4px;
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .city-stations.expanded {
-    max-height: 300px;
-    opacity: 1;
-    transform: translateY(0);
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  max-height: 300px;
+  opacity: 1;
+  transform: translateY(0);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .city-stations.expanded::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .station-item {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 12px 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .station-item:hover {
-    background: #2a2a2a;
-    border-color: #555;
+  background: #2a2a2a;
+  border-color: #555;
 }
 
 .station-item.selected {
-    background: #2a2a2a;
-    border-color: #00bbff;
+  background: #2a2a2a;
+  border-color: #00bbff;
 }
 
 .station-id {
-    font-family: 'Consolas', monospace;
-    font-size: 13px;
-    color: #fff;
-    font-weight: bold;
-    text-align: center;
+  font-family: "Consolas", monospace;
+  font-size: 13px;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
 }
 
 .station-location {
-    font-size: 11px;
-    color: #ccc;
-    text-align: center;
+  font-size: 11px;
+  color: #ccc;
+  text-align: center;
 }

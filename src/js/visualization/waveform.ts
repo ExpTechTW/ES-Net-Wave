@@ -118,6 +118,7 @@ class WaveformVisualizer {
     // Reset filter state when clearing waveform
     this.filterManager.resetFilter(this.currentStation);
     this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
+    this.resetStats();
   }
 
   resetStats() {

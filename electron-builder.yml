@@ -1,14 +1,18 @@
 appId: com.exptech.es-net-wave
 productName: ES-Net-Wave
-copyright: Copyright © 2026 ExpTech Studio
+copyright: Copyright © 2025 ExpTech Studio
 
 directories:
   output: dist
+
+extraMetadata:
+  main: ./dist/main.js
 
 files:
   - dist/**/*
   - src/view/**/*
   - src/css/**/*
+  - package.json
   - "!tsconfig*.json"
   - "!*.md"
   - "!package-lock.json"
@@ -25,17 +29,37 @@ win:
     - target: nsis
       arch:
         - x64
+        - ia32
   icon: ./app.ico
+  verifyUpdateCodeSignature: false
+
+nsis:
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  deleteAppDataOnUninstall: false
 
 mac:
+  category: public.app-category.productivity
+  icon: ./app.png
+  hardenedRuntime: true
   target:
     - target: dmg
       arch:
+        - arm64
         - x64
-  icon: ./app.png
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  gatekeeperAssess: false
+  entitlements: ./assets/entitlements.mac.plist
+  entitlementsInherit: ./assets/entitlements.mac.plist
 
 linux:
+  category: Development
+  icon: ./app.png
   target:
     - target: AppImage
       arch:
         - x64
+        - arm64

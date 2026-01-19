@@ -31,35 +31,5 @@
     "electron-builder": "^24.0.0",
     "esbuild": "^0.27.2",
     "typescript": "^5.9.3"
-  },
-  "build": {
-    "appId": "com.exptech.es-net-wave",
-    "productName": "ES-Net-Wave",
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "./app.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "./app.png"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "./app.png"
-    },
-    "files": [
-      "dist/**/*",
-      "src/view/**/*",
-      "src/css/**/*",
-      "!tsconfig*.json",
-      "!*.md",
-      "!package-lock.json",
-      "!node_modules/**/*",
-      "!dist/builder-*",
-      "!dist/win-unpacked/**/*"
-    ]
   }
 }

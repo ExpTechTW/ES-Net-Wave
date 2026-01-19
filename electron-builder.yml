@@ -1,0 +1,41 @@
+appId: com.es-net-wave
+productName: ES-Net-Wave
+copyright: Copyright © 2026 ExpTech Studio
+
+directories:
+  output: dist
+
+files:
+  - dist/**/*
+  - src/view/**/*
+  - src/css/**/*
+  - "!tsconfig*.json"
+  - "!*.md"
+  - "!package-lock.json"
+  - "!node_modules/**/*"
+  - "!dist/builder-*"
+  - "!dist/win-unpacked/**/*"
+
+compression: maximum
+asar: true
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: ./app.ico
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+  icon: ./app.png
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64

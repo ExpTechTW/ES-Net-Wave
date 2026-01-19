@@ -28,8 +28,6 @@ win:
   icon: ./app.ico
 
 mac:
-  notarize:
-    teamID: ${APPLE_TEAM_ID}
   target:
     - target: dmg
       arch:

@@ -5,10 +5,10 @@
   "author": "ExpTech Studio <ExpTech.tw@gmail.com>",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.main.json && esbuild src/js/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron",
+    "build": "tsc -p tsconfig.main.json && esbuild src/ts/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron",
     "dev": "concurrently --kill-others --names \"MAIN,RENDER,ELECTRON\" \"npm run tsc-main\" \"npm run tsc-renderer\" \"electron .\"",
     "tsc-main": "tsc -p tsconfig.main.json --watch --preserveWatchOutput",
-    "tsc-renderer": "esbuild src/js/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron --watch",
+    "tsc-renderer": "esbuild src/ts/index.ts --bundle --outfile=dist/js/index.js --format=cjs --platform=browser --external:electron --watch",
     "start": "electron .",
     "dist": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",

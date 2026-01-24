@@ -5,16 +5,11 @@ import DataDisplay from "../ui/data-display";
 import { FilterManager } from "../utils/filter";
 import { parseWebSocketMessage, ParsedMessage } from "../utils/data-parser";
 
-interface DataPoint {
-  t: number;
-  x: number;
-  y: number;
-  z: number;
-}
-
 class WaveformVisualizer {
-  private TIME_WINDOW: number = ES.CANVAS.TIME_WINDOW_SECONDS * 1000; // 動態從配置讀取
-  private dataBuffer: DataPoint[] = [];
+  private maxPoints: number = ES.CANVAS.MAX_POINTS;
+  private bufX: number[] = new Array(this.maxPoints).fill(NaN);
+  private bufY: number[] = new Array(this.maxPoints).fill(NaN);
+  private bufZ: number[] = new Array(this.maxPoints).fill(NaN);
   private isInitialized: boolean = false;
   private isConnected: boolean = false;
   private lastDataTime: number = 0;
@@ -38,9 +33,13 @@ class WaveformVisualizer {
     const canvasX = document.getElementById("waveform-x") as HTMLCanvasElement;
     const canvasY = document.getElementById("waveform-y") as HTMLCanvasElement;
     const canvasZ = document.getElementById("waveform-z") as HTMLCanvasElement;
+    const canvasTime = document.getElementById(
+      "time-axis",
+    ) as HTMLCanvasElement;
 
-    this.renderer.initialize(canvasX, canvasY, canvasZ);
+    this.renderer.initialize(canvasX, canvasY, canvasZ, canvasTime);
     this.renderer.startAnimation();
+    this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     this.isInitialized = true;
 
     this.resetStats();
@@ -93,7 +92,6 @@ class WaveformVisualizer {
           parsed.sensorData.x,
           parsed.sensorData.y,
           parsed.sensorData.z,
-          parsed.sensorData.timestamp,
         );
       }
     }
@@ -114,10 +112,12 @@ class WaveformVisualizer {
   }
 
   clearWaveform() {
-    this.dataBuffer = [];
+    this.bufX.fill(NaN);
+    this.bufY.fill(NaN);
+    this.bufZ.fill(NaN);
     // Reset filter state when clearing waveform
     this.filterManager.resetFilter(this.currentStation);
-    this.renderer.updateWaveformData(this.dataBuffer);
+    this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
     this.resetStats();
   }
 
@@ -131,11 +131,10 @@ class WaveformVisualizer {
     this.dataDisplay.resetDisplay();
   }
 
-  pushData(xArr: number[], yArr: number[], zArr: number[], timestamp: number) {
+  pushData(xArr: number[], yArr: number[], zArr: number[]) {
     if (!this.isInitialized) return;
 
     const len = xArr.length;
-    const packetDuration = len * 20; // 20ms per sample
 
     // Apply filtering to each axis with separate filter instances
     const filterX = this.filterManager.getFilter(this.currentStation, "x");
@@ -146,28 +145,19 @@ class WaveformVisualizer {
     const filteredY = yArr.map((y) => filterY.filter(y));
     const filteredZ = zArr.map((z) => filterZ.filter(z));
 
-    // Add data points with timestamps
-    for (let i = 0; i < len; i++) {
-      const ptTime = timestamp + i * 20;
-      this.dataBuffer.push({
-        t: ptTime,
-        x: filteredX[i],
-        y: filteredY[i],
-        z: filteredZ[i],
-      });
-    }
+    this.bufX.splice(0, len);
+    this.bufX.push(...filteredX);
+    this.bufY.splice(0, len);
+    this.bufY.push(...filteredY);
+    this.bufZ.splice(0, len);
+    this.bufZ.push(...filteredZ);
 
-    // Remove old data (keep 2 minutes + buffer)
-    const cutoffTime = Date.now() - this.TIME_WINDOW - 2000;
-    this.dataBuffer = this.dataBuffer.filter((pt) => pt.t > cutoffTime);
-
-    this.renderer.updateWaveformData(this.dataBuffer);
+    this.renderer.updateWaveformData(this.bufX, this.bufY, this.bufZ);
   }
 
   setStation(station: any) {
     this.currentStation = station;
     this.dataDisplay.updateStationInfo(station);
-    this.renderer.resetScales();
   }
 
   updateConnectionStatus(status: string) {
@@ -182,7 +172,7 @@ class WaveformVisualizer {
   checkDataStatus() {
     if (this.isConnected) {
       const timeSinceLastData = Date.now() - this.lastDataTime;
-      const hasData = timeSinceLastData <= 1000;
+      const hasData = timeSinceLastData <= 2000;
       this.dataDisplay.updateDataStatus(hasData);
     }
   }

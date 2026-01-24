@@ -2,6 +2,7 @@ export interface ParsedSensorData {
   x: number[];
   y: number[];
   z: number[];
+  timestamp: number;
 }
 
 export interface ParsedIntensityData {
@@ -71,6 +72,9 @@ export function parseWebSocketMessage(
       // 感測器數據
       if (bytes.length < 10) return null;
 
+      const dataView = new DataView(bytes.buffer);
+      const ts = dataView.getBigUint64(2, true); // timestamp at offset 2
+
       const count = bytes[1];
       const xArr: number[] = [];
       const yArr: number[] = [];
@@ -79,7 +83,6 @@ export function parseWebSocketMessage(
 
       for (let i = 0; i < count; i++) {
         if (offset + 12 > bytes.length) break;
-        const dataView = new DataView(bytes.buffer);
         const x = dataView.getFloat32(offset, true);
         const y = dataView.getFloat32(offset + 4, true);
         const z = dataView.getFloat32(offset + 8, true);
@@ -97,6 +100,7 @@ export function parseWebSocketMessage(
           x: xArr,
           y: yArr,
           z: zArr,
+          timestamp: Number(ts),
         },
       };
     }

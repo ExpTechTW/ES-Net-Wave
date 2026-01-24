@@ -155,7 +155,7 @@ class DataDisplay {
           statusElement.textContent = "🔴 Disconnected";
           break;
         case "error":
-          statusElement.textContent = "❌ Connection Error";
+          statusElement.textContent = "❌ Error";
           break;
         default:
           statusElement.textContent = "⚪ Unknown";

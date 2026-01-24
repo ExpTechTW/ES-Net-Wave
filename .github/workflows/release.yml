@@ -56,7 +56,7 @@ jobs:
             ${{ runner.os }}-electron-
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Import Code-Signing Certificates (macOS)
         if: matrix.platform == 'macos-latest'
@@ -73,12 +73,13 @@ jobs:
 
       - name: Build Electron app
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Apple code signing (only if secrets are available)
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run ${{ matrix.build_script }} --publish never
 
       - name: Upload Release Assets

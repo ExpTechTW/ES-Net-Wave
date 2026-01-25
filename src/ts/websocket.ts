@@ -29,7 +29,7 @@ class WSService {
   };
   private deviceId: string = constants.ES.STATION.DEFAULT_ID;
   private currentStation: string = this.deviceId;
-  private wsUrl: string = "wss://bamboo.exptech.dev/ws/eswave";
+  private wsUrl: string = "wss://bamboo.exptech.dev/ws/esnet";
   private isManualReconnect: boolean = false;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 10;

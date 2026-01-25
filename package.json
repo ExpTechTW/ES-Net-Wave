@@ -21,6 +21,7 @@
     "url": "https://github.com/ExpTechTW/ES-Net-Wave.git"
   },
   "dependencies": {
+    "electron-updater": "^6.7.3",
     "ws": "^8.13.0"
   },
   "devDependencies": {

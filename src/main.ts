@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from "electron";
+import { autoUpdater } from "electron-updater";
 import * as path from "path";
 
 let mainWindow: BrowserWindow | null = null;
@@ -53,6 +54,43 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     createWindow();
+
+    // Auto-updater configuration
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.allowPrerelease = true; // Since version is beta
+    autoUpdater.allowDowngrade = false;
+
+    if (app.isPackaged) {
+      autoUpdater.setFeedURL({
+        provider: 'github',
+        owner: 'ExpTechTW',
+        repo: 'ES-Net-Wave',
+        vPrefixedTagName: false,
+      });
+    }
+
+    autoUpdater.on('update-available', (info) => {
+      console.log('Update available:', info.version);
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+      console.log('Update downloaded:', info.version);
+      setTimeout(() => {
+        autoUpdater.quitAndInstall(true, true);
+      }, 3000);
+    });
+
+    autoUpdater.on('error', (err) => {
+      console.error('Update error:', err.message);
+    });
+
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdates().catch(() => {});
+      setInterval(() => {
+        autoUpdater.checkForUpdates().catch(() => {});
+      }, 300000); // Check every 5 minutes
+    }
 
     mainWindow!.webContents.on("dom-ready", () => {
       mainWindow!.webContents.removeAllListeners("before-input-event");

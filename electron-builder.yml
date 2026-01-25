@@ -14,10 +14,10 @@ files:
   - src/view/**/*
   - src/css/**/*
   - package.json
+  - node_modules/electron-updater/**/*
   - "!tsconfig*.json"
   - "!*.md"
   - "!package-lock.json"
-  - "!node_modules/**/*"
   - "!dist/builder-*"
   - "!dist/win-unpacked/**/*"
 

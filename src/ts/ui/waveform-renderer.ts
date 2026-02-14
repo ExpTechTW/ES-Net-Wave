@@ -94,6 +94,7 @@ class WaveformRenderer {
   updateWaveformData(dataBuffer: DataPoint[]) {
     if (!this.isInitialized) return;
     this.dataBuffer = dataBuffer;
+
   }
 
   // Start animation loop
@@ -215,19 +216,11 @@ class WaveformRenderer {
           ? this.targetScaleY
           : this.targetScaleZ;
 
-    if (targetScale > currentScale) {
-      // 變大：快速跟上 (0.2)
-      const newScale = currentScale * 0.8 + targetScale * 0.2;
-      if (axis === "x") this.currentScaleX = newScale;
-      else if (axis === "y") this.currentScaleY = newScale;
-      else this.currentScaleZ = newScale;
-    } else {
-      // 變小：極慢速 (0.005)
-      const newScale = currentScale * 0.995 + targetScale * 0.005;
-      if (axis === "x") this.currentScaleX = newScale;
-      else if (axis === "y") this.currentScaleY = newScale;
-      else this.currentScaleZ = newScale;
-    }
+    // 即時調整縮放，跟有地震時一樣（顛倒的概念：縮小也即時）
+    const newScale = targetScale;
+    if (axis === "x") this.currentScaleX = newScale;
+    else if (axis === "y") this.currentScaleY = newScale;
+    else this.currentScaleZ = newScale;
   }
 
   // Compute target scales (only calculate, no decay)

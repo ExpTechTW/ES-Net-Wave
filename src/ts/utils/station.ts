@@ -14,7 +14,7 @@ class StationManager {
 
     try {
       const response = await fetch(
-        "https://raw.githubusercontent.com/ExpTechTW/API/refs/heads/main/resource/station.csv",
+        "http://api.core-tyo1.exptech.dev/api/v1/device/list",
       );
       const csvText = await response.text();
 
@@ -51,21 +51,24 @@ class StationManager {
 
       if (cols.length >= 7) {
         const id = cols[1];
-        const areaCode = cols[5]; // Area code from code column (region code)
+        const lat = parseFloat(cols[2]);
+        const lon = parseFloat(cols[3]);
         let net = cols[6];
         if (net === "1") net = "SE-Net";
         else if (net === "2") net = "MS-Net";
         else if (net === "3") net = "ES-Net";
-        const stationCode = cols[5];
+        else if (net === "4") net = "ES-Pro";
+        const locCode = cols[5];
 
-        // Only include ES-Net stations
-        if (net === "ES-Net") {
-          const location = this.getLocationName(stationCode); // Use code column for location lookup
-          // console.log('Adding station:', id, 'code:', stationCode, 'location:', location);
+        if (net === "ES-Net" || net === "ES-Pro") {
+          const location = this.getLocationName(locCode); // Use code column for location lookup
+          // console.log('Adding station:', id, 'code:', locCode, 'location:', location);
           this.stations[id] = {
             net: net,
-            areaCode: areaCode,
-            info: [{ code: stationCode }],
+            lat: isNaN(lat) ? 0 : lat,
+            lon: isNaN(lon) ? 0 : lon,
+            areaCode: locCode,
+            info: [{ code: locCode }],
             location: location,
           };
         }
@@ -106,7 +109,7 @@ class StationManager {
 
   getESNetStations() {
     return Object.entries(this.stations)
-      .filter(([id, station]) => station.net === "ES-Net")
+      .filter(([id, station]) => station.net === "ES-Net" || station.net === "ES-Pro")
       .map(([id, station]) => ({
         id: id,
         location: station.location || "未知地區",

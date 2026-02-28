@@ -1,6 +1,6 @@
 {
   "name": "es-net-wave",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0",
   "description": "ES-Net-Wave",
   "author": "ExpTech Studio <ExpTech.tw@gmail.com>",
   "main": "dist/main.js",

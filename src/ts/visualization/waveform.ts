@@ -12,6 +12,64 @@ interface DataPoint {
   z: number;
 }
 
+interface SecondData {
+  timestamp: number;
+  totalMessages: number;
+  errorMessages: number;
+}
+
+class SlidingWindowErrorRate {
+  private window: SecondData[] = [];
+  private windowSize: number = 60; // 60 seconds
+  private lastUpdateTime: number = 0;
+
+  addMessage(isValid: boolean) {
+    const now = Math.floor(Date.now() / 1000); // seconds
+
+    if (now !== this.lastUpdateTime) {
+      // New second, add new entry and remove old ones
+      this.window.push({
+        timestamp: now,
+        totalMessages: 0,
+        errorMessages: 0,
+      });
+
+      // Remove entries older than 60 seconds
+      const cutoff = now - this.windowSize;
+      this.window = this.window.filter((entry) => entry.timestamp > cutoff);
+
+      this.lastUpdateTime = now;
+    }
+
+    // Update current second
+    if (this.window.length > 0) {
+      const current = this.window[this.window.length - 1];
+      current.totalMessages++;
+      if (!isValid) {
+        current.errorMessages++;
+      }
+    }
+  }
+
+  getErrorRate(): number {
+    const totalMessages = this.window.reduce(
+      (sum, entry) => sum + entry.totalMessages,
+      0,
+    );
+    const errorMessages = this.window.reduce(
+      (sum, entry) => sum + entry.errorMessages,
+      0,
+    );
+
+    return totalMessages > 0 ? (errorMessages / totalMessages) * 100 : 0;
+  }
+
+  reset() {
+    this.window = [];
+    this.lastUpdateTime = 0;
+  }
+}
+
 class WaveformVisualizer {
   private TIME_WINDOW: number = ES.CANVAS.TIME_WINDOW_SECONDS * 1000; // 動態從配置讀取
   private dataBuffer: DataPoint[] = [];
@@ -23,8 +81,8 @@ class WaveformVisualizer {
   private renderer: WaveformRenderer = new WaveformRenderer();
   private dataDisplay: DataDisplay = new DataDisplay();
   private filterManager: FilterManager = new FilterManager();
-  private totalMessages: number = 0;
-  private validMessages: number = 0;
+  private errorRateWindow: SlidingWindowErrorRate =
+    new SlidingWindowErrorRate();
 
   initialize() {
     if (this.isInitialized) {
@@ -75,13 +133,13 @@ class WaveformVisualizer {
 
   handleWebSocketMessage(data: any) {
     this.lastDataTime = Date.now();
-    this.totalMessages++;
 
     const parsed = parseWebSocketMessage(data, this.currentStation);
+    const isValid = parsed !== null;
+
+    this.errorRateWindow.addMessage(isValid);
 
     if (parsed) {
-      this.validMessages++;
-
       if (parsed.type === "intensity" && parsed.intensityData) {
         this.dataDisplay.updateIntensityData(
           parsed.intensityData.intensity,
@@ -98,10 +156,7 @@ class WaveformVisualizer {
       }
     }
 
-    const errorRate =
-      this.totalMessages > 0
-        ? ((this.totalMessages - this.validMessages) / this.totalMessages) * 100
-        : 0;
+    const errorRate = this.errorRateWindow.getErrorRate();
     this.dataDisplay.updateErrorRate(errorRate);
   }
 
@@ -122,8 +177,7 @@ class WaveformVisualizer {
   }
 
   resetStats() {
-    this.totalMessages = 0;
-    this.validMessages = 0;
+    this.errorRateWindow.reset();
     this.dataDisplay.updateErrorRate(0);
   }
 

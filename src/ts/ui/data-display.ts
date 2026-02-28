@@ -72,7 +72,7 @@ class DataDisplay {
           second: "2-digit",
           hour12: false,
         })
-        .replace(/\//g, "-")
+        .replace(/\//g, "/")
         .replace("24:", "00:");
       timeElement.innerHTML = timeStr.replace(" ", "<br>");
     }

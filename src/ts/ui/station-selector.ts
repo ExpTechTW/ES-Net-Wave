@@ -225,6 +225,11 @@ class StationSelector {
 
         cityStationsContainer.classList.add("expanded");
         cityHeader.classList.add("expanded");
+
+        // Scroll the city header to the top of the view
+        setTimeout(() => {
+          cityHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300); // Small delay to allow CSS transition to start
       }
     }
   }

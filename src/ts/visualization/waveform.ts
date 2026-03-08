@@ -231,6 +231,10 @@ class WaveformVisualizer {
     }
 
     this.dataDisplay.updateConnectionStatus(status);
+
+    if (status === "disconnected") {
+      this.dataDisplay.updateDataStatus(false);
+    }
   }
 
   checkDataStatus() {

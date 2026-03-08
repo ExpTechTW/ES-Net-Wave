@@ -9,9 +9,14 @@ const { ipcRenderer } = require("electron");
 
 let wsService: WSService | null = null;
 let stationSelector: StationSelector | null = null;
+ipcRenderer.on("ota-log", (event: IpcRendererEvent, message: string) => {
+  console.log(`[OTA] ${message}`);
+});
 
 function initializeApplication() {
   try {
+    ipcRenderer.send("init-ota");
+
     wsService = new WSService();
     wsService.connect();
     window.wsService = wsService;

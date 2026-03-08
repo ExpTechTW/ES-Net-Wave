@@ -11,6 +11,7 @@ extraMetadata:
 files:
   - dist/main.js
   - dist/js/**/*
+  - dist/ts/**/*
   - src/view/**/*
   - src/css/**/*
   - package.json

@@ -14,6 +14,6 @@
     "declaration": false,
     "sourceMap": true
   },
-  "include": ["src/main.ts", "src/ts/utils/ota.ts"],
+  "include": ["src/main.ts"],
   "exclude": ["node_modules", "dist"]
 }

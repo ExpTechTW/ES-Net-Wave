@@ -10,7 +10,6 @@ extraMetadata:
 
 files:
   - dist/main.js
-  - dist/ts/utils/ota.js
   - dist/js/**/*
   - src/view/**/*
   - src/css/**/*

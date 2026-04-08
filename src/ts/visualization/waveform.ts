@@ -4,6 +4,7 @@ import WaveformRenderer from "../ui/waveform-renderer";
 import DataDisplay from "../ui/data-display";
 import { FilterManager } from "../utils/filter";
 import { parseWebSocketMessage, ParsedMessage } from "../utils/data-parser";
+import ntpNow from "../utils/ntp";
 
 interface DataPoint {
   t: number;
@@ -24,7 +25,7 @@ class SlidingWindowErrorRate {
   private lastUpdateTime: number = 0;
 
   addMessage(isValid: boolean) {
-    const now = Math.floor(Date.now() / 1000); // seconds
+    const now = Math.floor(ntpNow() / 1000); // seconds
 
     if (now !== this.lastUpdateTime) {
       // New second, add new entry and remove old ones
@@ -132,7 +133,7 @@ class WaveformVisualizer {
   }
 
   handleWebSocketMessage(data: any) {
-    this.lastDataTime = Date.now();
+    this.lastDataTime = ntpNow();
 
     const parsed = parseWebSocketMessage(data, this.currentStation);
     const isValid = parsed !== null;
@@ -212,7 +213,7 @@ class WaveformVisualizer {
     }
 
     // Remove old data (keep 2 minutes + buffer)
-    const cutoffTime = Date.now() - this.TIME_WINDOW - 2000;
+    const cutoffTime = ntpNow() - this.TIME_WINDOW - 2000;
     this.dataBuffer = this.dataBuffer.filter((pt) => pt.t > cutoffTime);
 
     this.renderer.updateWaveformData(this.dataBuffer);
@@ -227,7 +228,7 @@ class WaveformVisualizer {
   updateConnectionStatus(status: string) {
     this.isConnected = status === "connected";
     if (this.isConnected) {
-      this.lastDataTime = Date.now();
+      this.lastDataTime = ntpNow();
     }
 
     this.dataDisplay.updateConnectionStatus(status);
@@ -239,7 +240,7 @@ class WaveformVisualizer {
 
   checkDataStatus() {
     if (this.isConnected) {
-      const timeSinceLastData = Date.now() - this.lastDataTime;
+      const timeSinceLastData = ntpNow() - this.lastDataTime;
       const hasData = timeSinceLastData <= 1000;
       this.dataDisplay.updateDataStatus(hasData);
     }

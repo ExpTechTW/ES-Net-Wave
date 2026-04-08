@@ -2,6 +2,7 @@ import WaveformVisualizer from "./visualization/waveform";
 import WSService from "./websocket";
 import { StationSelector } from "./ui/station-selector";
 import { logger } from "./utils/logger";
+import { ntpManager } from "./utils/ntp";
 import type { IpcRendererEvent } from "electron";
 
 declare const require: any;
@@ -17,6 +18,10 @@ ipcRenderer.on("ota-log", (event: IpcRendererEvent, message: string) => {
 
 function initializeApplication() {
   try {
+    ntpManager.initialize().catch((error) => {
+      logger.error('NTP 初始化失敗:', error);
+    });
+
     ipcRenderer.send("init-ota");
 
     wsService = new WSService();

@@ -2,6 +2,7 @@
 // Handles waveform visualization rendering
 import { ES } from "../constants";
 import { logger } from "../utils/logger";
+import ntpNow from "../utils/ntp";
 
 interface DataPoint {
   t: number;
@@ -148,7 +149,7 @@ class WaveformRenderer {
     const height = this.canvasX.height;
 
     // Define time window: [now - 120s] to [now]
-    const now = Date.now();
+    const now = ntpNow();
     const rightEdgeTime = now;
     const leftEdgeTime = now - this.TIME_WINDOW;
 

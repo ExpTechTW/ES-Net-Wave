@@ -3,6 +3,7 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { initAutoUpdater } from "./ts/utils/ota.js";
+import { ntpManager } from "./ts/utils/ntp.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -56,7 +57,9 @@ if (!gotTheLock) {
     }
   });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
+    await ntpManager.initialize();
+
     createWindow();
 
     ipcMain.once("init-ota", () => {

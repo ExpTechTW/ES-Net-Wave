@@ -1,5 +1,6 @@
 import { StationManager } from "../utils/station";
 import { ES } from "../constants";
+import { logger } from "../utils/logger";
 
 class StationSelector {
   private stationManager: StationManager | null = new StationManager();
@@ -66,7 +67,7 @@ class StationSelector {
 
       this.isInitialized = true;
     } catch (error) {
-      console.error("Failed to initialize station selector:", error);
+      logger.error("Failed to initialize station selector:", error);
     }
   }
 
@@ -79,7 +80,7 @@ class StationSelector {
 
     const stationList = document.getElementById("station-list");
     if (!stationList) {
-      console.error("station-list element not found");
+      logger.error("station-list element not found");
       return;
     }
 
@@ -241,7 +242,7 @@ class StationSelector {
     const defaultCards = document.getElementById("default-cards");
 
     if (!stationCard || !stationSelection || !defaultCards) {
-      console.error("Required elements not found for station selector");
+      logger.error("Required elements not found for station selector");
       return;
     }
 

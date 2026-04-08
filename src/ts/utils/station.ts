@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 class StationManager {
   private stations: { [key: string]: any } = {};
   private region: { [key: string]: any } = {};
@@ -25,7 +27,7 @@ class StationManager {
 
       this.parseStations(csvText);
     } catch (error) {
-      console.error("Failed to load stations:", error);
+      logger.error("Failed to load stations:", error);
     } finally {
       this.isLoading = false;
     }
@@ -102,7 +104,7 @@ class StationManager {
 
       return "未知地區";
     } catch (error) {
-      console.error("Error parsing location:", error, code);
+      logger.error("Error parsing location:", error, code);
       return "未知地區";
     }
   }

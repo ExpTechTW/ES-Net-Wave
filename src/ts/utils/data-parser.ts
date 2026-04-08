@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 export interface ParsedSensorData {
   x: number[];
   y: number[];
@@ -105,7 +107,7 @@ export function parseWebSocketMessage(
       };
     }
   } catch (error) {
-    console.error("Error parsing message:", error);
+    logger.error("Error parsing message:", error);
   }
 
   return null;

@@ -1,16 +1,18 @@
-console.log("Application Starting");
 import WaveformVisualizer from "./visualization/waveform";
 import WSService from "./websocket";
 import { StationSelector } from "./ui/station-selector";
+import { logger } from "./utils/logger";
 import type { IpcRendererEvent } from "electron";
 
 declare const require: any;
 const { ipcRenderer } = require("electron");
 
+logger.info("Application Starting");
+
 let wsService: WSService | null = null;
 let stationSelector: StationSelector | null = null;
 ipcRenderer.on("ota-log", (event: IpcRendererEvent, message: string) => {
-  console.log(`[OTA] ${message}`);
+  logger.info(`[OTA] ${message}`);
 });
 
 function initializeApplication() {
@@ -28,7 +30,7 @@ function initializeApplication() {
     stationSelector.initialize();
     window.stationSelector = stationSelector;
   } catch (error) {
-    console.error("Failed to initialize application:", error);
+    logger.error("Failed to initialize application:", error);
   }
 }
 

@@ -1,5 +1,9 @@
 import { app, BrowserWindow } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import { createRequire } from 'module';
+import { logger } from './logger.js';
+
+const require = createRequire(import.meta.url);
+const { autoUpdater } = require('electron-updater');
 
 let updateCheckInterval: NodeJS.Timeout | null = null;
 let getMainWindowRef: (() => BrowserWindow | null) | null = null;
@@ -8,7 +12,7 @@ let getMainWindowRef: (() => BrowserWindow | null) | null = null;
  * Log helper that sends log to both main process console and renderer process
  */
 function logOTA(message: string) {
-  console.log(`[OTA] ${message}`);
+  logger.info(`[OTA] ${message}`);
   if (getMainWindowRef) {
     const mainWindow = getMainWindowRef();
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -47,7 +51,7 @@ function initAutoUpdater(getMainWindow: () => BrowserWindow | null) {
       }
     });
 
-    autoUpdater.on('update-available', (info) => {
+    autoUpdater.on('update-available', (info: any) => {
       logOTA(`Update available: ${info.version}`);
       const mainWindow = getMainWindow();
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -55,7 +59,7 @@ function initAutoUpdater(getMainWindow: () => BrowserWindow | null) {
       }
     });
 
-    autoUpdater.on('update-not-available', (info) => {
+    autoUpdater.on('update-not-available', (info: any) => {
       logOTA(`Update not available: ${info.version}`);
       const mainWindow = getMainWindow();
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -63,7 +67,7 @@ function initAutoUpdater(getMainWindow: () => BrowserWindow | null) {
       }
     });
 
-    autoUpdater.on('download-progress', (progressObj) => {
+    autoUpdater.on('download-progress', (progressObj: any) => {
       logOTA(`Download progress: ${progressObj.percent.toFixed(2)}%`);
       const mainWindow = getMainWindow();
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -71,7 +75,7 @@ function initAutoUpdater(getMainWindow: () => BrowserWindow | null) {
       }
     });
 
-    autoUpdater.on('update-downloaded', (info) => {
+    autoUpdater.on('update-downloaded', (info: any) => {
       logOTA(`Update downloaded: ${info.version}`);
       const mainWindow = getMainWindow();
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -83,7 +87,7 @@ function initAutoUpdater(getMainWindow: () => BrowserWindow | null) {
       }, 3000);
     });
 
-    autoUpdater.on('error', (err) => {
+    autoUpdater.on('error', (err: any) => {
       const message = err && err.message ? err.message : String(err);
       logOTA(`Update error: ${message}`);
       const mainWindow = getMainWindow();

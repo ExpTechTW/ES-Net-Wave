@@ -1,6 +1,10 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
-import { initAutoUpdater } from "./ts/utils/ota";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { initAutoUpdater } from "./ts/utils/ota.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
 let dataService: any;

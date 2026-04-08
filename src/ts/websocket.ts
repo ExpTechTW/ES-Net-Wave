@@ -1,5 +1,6 @@
 import { ipcRenderer } from "electron";
 import * as constants from "./constants";
+import { logger } from "./utils/logger";
 
 interface NetStatus {
   lastPktTime: number;
@@ -52,7 +53,7 @@ class WSService {
       return;
     }
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log("Max reconnection attempts reached, stopping reconnection");
+      logger.info("Max reconnection attempts reached, stopping reconnection");
       this.sendToRenderer("connection-status", "error");
       return;
     }
@@ -65,7 +66,7 @@ class WSService {
     this.ws = new WebSocket(this.wsUrl);
 
     this.ws.addEventListener("open", () => {
-      console.log("WebSocket connected");
+      logger.info("WebSocket connected");
       this.isManualReconnect = false;
       this.reconnectAttempts = 0;
       this.sendToRenderer("connection-status", "connected");
@@ -82,7 +83,7 @@ class WSService {
     });
 
     this.ws.addEventListener("error", (error: Event) => {
-      console.error("WebSocket error:", error);
+      logger.error("WebSocket error:", error);
       this.sendToRenderer("connection-status", "error");
 
       const errorEvent = error as ErrorEvent;
@@ -100,7 +101,7 @@ class WSService {
           this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts),
           this.maxReconnectDelay,
         );
-        console.log(
+        logger.info(
           `Server error detected, retrying in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
         );
         setTimeout(() => this.connect(), delay);
@@ -108,7 +109,7 @@ class WSService {
     });
 
     this.ws.addEventListener("close", () => {
-      console.log("WebSocket closed");
+      logger.info("WebSocket closed");
       // Only send disconnected status if not manually reconnecting
       if (!this.isManualReconnect) {
         this.sendToRenderer("connection-status", "disconnected");
@@ -125,7 +126,7 @@ class WSService {
       this.sendToRenderer("ws-message", message);
       this.sendToRenderer("connection-status", "connected");
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     }
   }
 
@@ -133,7 +134,7 @@ class WSService {
     try {
       ipcRenderer.send("ws-message-to-main", { channel, data });
     } catch (error) {
-      console.error("Failed to send message via IPC:", error);
+      logger.error("Failed to send message via IPC:", error);
     }
   }
 
@@ -149,7 +150,7 @@ class WSService {
     const wasChanged = this.currentStation !== stationId;
 
     if (wasChanged) {
-      console.log(
+      logger.info(
         `Switching station from ${this.currentStation} to ${stationId}`,
       );
     }

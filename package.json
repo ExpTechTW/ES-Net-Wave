@@ -2,6 +2,7 @@
   "name": "es-net-wave",
   "version": "1.0.1",
   "description": "ES-Net-Wave",
+  "type": "module",
   "author": "ExpTech Studio <ExpTech.tw@gmail.com>",
   "main": "dist/main.js",
   "scripts": {

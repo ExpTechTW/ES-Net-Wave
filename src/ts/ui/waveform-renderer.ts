@@ -1,6 +1,7 @@
 // Waveform Renderer Module
 // Handles waveform visualization rendering
 import { ES } from "../constants";
+import { logger } from "../utils/logger";
 
 interface DataPoint {
   t: number;
@@ -64,7 +65,7 @@ class WaveformRenderer {
 
       this.isInitialized = true;
     } else {
-      console.error("Waveform canvases not found");
+      logger.error("Waveform canvases not found");
     }
   }
 

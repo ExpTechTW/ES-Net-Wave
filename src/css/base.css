@@ -62,6 +62,11 @@ canvas {
   border-bottom: 1px solid #333;
 }
 
+#overlay-waveform-container {
+  position: relative;
+  border-bottom: 1px solid #333;
+}
+
 .time-axis-canvas {
   border-top: 1px solid #333;
   background: #0a0a0a;

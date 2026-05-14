@@ -15,9 +15,11 @@ class WaveformRenderer {
   private ctxX: CanvasRenderingContext2D | null = null;
   private ctxY: CanvasRenderingContext2D | null = null;
   private ctxZ: CanvasRenderingContext2D | null = null;
+  private ctxOverlay: CanvasRenderingContext2D | null = null;
   private canvasX: HTMLCanvasElement | null = null;
   private canvasY: HTMLCanvasElement | null = null;
   private canvasZ: HTMLCanvasElement | null = null;
+  private canvasOverlay: HTMLCanvasElement | null = null;
   private animationId: number | null = null;
   private waveformUpdateTimer: NodeJS.Timeout | null = null;
   private scaleUpdateTimer: NodeJS.Timeout | null = null;
@@ -26,9 +28,11 @@ class WaveformRenderer {
   private currentScaleX: number = ES.CANVAS.DEFAULT_SCALE;
   private currentScaleY: number = ES.CANVAS.DEFAULT_SCALE;
   private currentScaleZ: number = ES.CANVAS.DEFAULT_SCALE;
+  private currentScaleOverlay: number = ES.CANVAS.DEFAULT_SCALE;
   private targetScaleX: number = ES.CANVAS.DEFAULT_SCALE;
   private targetScaleY: number = ES.CANVAS.DEFAULT_SCALE;
   private targetScaleZ: number = ES.CANVAS.DEFAULT_SCALE;
+  private targetScaleOverlay: number = ES.CANVAS.DEFAULT_SCALE;
   private lastWaveformUpdate: number = Date.now();
   private waveformUpdateInterval: number =
     ES.CANVAS.WAVEFORM_UPDATE_INTERVAL_SECONDS * 1000;
@@ -48,9 +52,11 @@ class WaveformRenderer {
       this.canvasX = canvasX as HTMLCanvasElement;
       this.canvasY = canvasY as HTMLCanvasElement;
       this.canvasZ = canvasZ as HTMLCanvasElement;
+      this.canvasOverlay = document.getElementById("waveform-overlay") as HTMLCanvasElement;
       this.ctxX = this.canvasX.getContext("2d");
       this.ctxY = this.canvasY.getContext("2d");
       this.ctxZ = this.canvasZ.getContext("2d");
+      this.ctxOverlay = this.canvasOverlay?.getContext("2d") || null;
 
       // Set canvas sizes
       this.setCanvasSizes();
@@ -77,7 +83,7 @@ class WaveformRenderer {
 
     const width = chartArea.clientWidth;
     const height = chartArea.clientHeight;
-    const perH = Math.max(40, Math.floor(height / 3));
+    const perH = Math.max(40, Math.floor(height / 4)); // 现在有4个部分：3个单独 + 1个重叠
 
     [this.canvasX, this.canvasY, this.canvasZ].forEach((canvas) => {
       if (canvas) {
@@ -85,6 +91,11 @@ class WaveformRenderer {
         canvas.height = perH;
       }
     });
+
+    if (this.canvasOverlay) {
+      this.canvasOverlay.width = width;
+      this.canvasOverlay.height = perH;
+    }
   }
 
   // Handle window resize
@@ -184,6 +195,9 @@ class WaveformRenderer {
       height,
       this.currentScaleZ,
     );
+
+    // Draw overlay waveform
+    this.drawOverlayWaveform(leftEdgeTime, width, height);
   }
 
   // Reset scales to default when switching stations
@@ -191,9 +205,11 @@ class WaveformRenderer {
     this.currentScaleX = ES.CANVAS.DEFAULT_SCALE;
     this.currentScaleY = ES.CANVAS.DEFAULT_SCALE;
     this.currentScaleZ = ES.CANVAS.DEFAULT_SCALE;
+    this.currentScaleOverlay = ES.CANVAS.DEFAULT_SCALE;
     this.targetScaleX = ES.CANVAS.DEFAULT_SCALE;
     this.targetScaleY = ES.CANVAS.DEFAULT_SCALE;
     this.targetScaleZ = ES.CANVAS.DEFAULT_SCALE;
+    this.targetScaleOverlay = ES.CANVAS.DEFAULT_SCALE;
   }
 
   // Update scales every frame for smooth scaling
@@ -202,27 +218,33 @@ class WaveformRenderer {
     this.updateSingleScale("x");
     this.updateSingleScale("y");
     this.updateSingleScale("z");
+    this.updateSingleScale("overlay");
   }
 
-  private updateSingleScale(axis: "x" | "y" | "z") {
+  private updateSingleScale(axis: "x" | "y" | "z" | "overlay") {
     const currentScale =
       axis === "x"
         ? this.currentScaleX
         : axis === "y"
           ? this.currentScaleY
-          : this.currentScaleZ;
+          : axis === "z"
+            ? this.currentScaleZ
+            : this.currentScaleOverlay;
     const targetScale =
       axis === "x"
         ? this.targetScaleX
         : axis === "y"
           ? this.targetScaleY
-          : this.targetScaleZ;
+          : axis === "z"
+            ? this.targetScaleZ
+            : this.targetScaleOverlay;
 
     // 即時調整縮放，跟有地震時一樣（顛倒的概念：縮小也即時）
     const newScale = targetScale;
     if (axis === "x") this.currentScaleX = newScale;
     else if (axis === "y") this.currentScaleY = newScale;
-    else this.currentScaleZ = newScale;
+    else if (axis === "z") this.currentScaleZ = newScale;
+    else this.currentScaleOverlay = newScale;
   }
 
   // Compute target scales (only calculate, no decay)
@@ -245,6 +267,10 @@ class WaveformRenderer {
     this.targetScaleX = Math.max(maxX || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
     this.targetScaleY = Math.max(maxY || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
     this.targetScaleZ = Math.max(maxZ || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
+    
+    // Overlay 使用所有軸的綜合最大值
+    const maxOverall = Math.max(maxX, maxY, maxZ);
+    this.targetScaleOverlay = Math.max(maxOverall || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
   }
 
   // Draw single axis
@@ -304,6 +330,67 @@ class WaveformRenderer {
     ctx.stroke();
   }
 
+  // Draw overlay waveform with all three axes
+  drawOverlayWaveform(leftEdgeTime: number, width: number, height: number) {
+    if (!this.ctxOverlay || !this.canvasOverlay) return;
+
+    const ctx = this.ctxOverlay;
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw grid
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, height / 2);
+    ctx.lineTo(width, height / 2);
+
+    let gridTime =
+      Math.ceil(leftEdgeTime / (ES.CANVAS.GRID_INTERVAL_SECONDS * 1000)) *
+      (ES.CANVAS.GRID_INTERVAL_SECONDS * 1000);
+    while (gridTime < Date.now()) {
+      let x = ((gridTime - leftEdgeTime) / this.TIME_WINDOW) * width;
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      gridTime += ES.CANVAS.GRID_INTERVAL_SECONDS * 1000;
+    }
+    ctx.stroke();
+
+    // Use overlay's own scale based on combined maximum of all axes
+    const yScale = this.currentScaleOverlay > 0 ? height / 2 / this.currentScaleOverlay : 0;
+
+    // Draw waveforms in order: X (bottom), Y (middle), Z (top)
+    const axes = [
+      { axis: "x" as const, color: ES.COLORS.WAVE_X },
+      { axis: "y" as const, color: ES.COLORS.WAVE_Y },
+      { axis: "z" as const, color: ES.COLORS.WAVE_Z },
+    ];
+
+    axes.forEach(({ axis, color }) => {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      let started = false;
+
+      for (let i = 0; i < this.dataBuffer.length; i++) {
+        let pt = this.dataBuffer[i];
+        let x = ((pt.t - leftEdgeTime) / this.TIME_WINDOW) * width;
+        let y = height / 2 - pt[axis] * yScale;
+
+        if (x < -10 && !started) continue;
+
+        if (!started) {
+          ctx.moveTo(x, y);
+          started = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
+
+        if (x > width) break;
+      }
+      ctx.stroke();
+    });
+  }
+
   // Cleanup
   destroy() {
     this.stopAnimation();
@@ -312,9 +399,11 @@ class WaveformRenderer {
     this.ctxX = null;
     this.ctxY = null;
     this.ctxZ = null;
+    this.ctxOverlay = null;
     this.canvasX = null;
     this.canvasY = null;
     this.canvasZ = null;
+    this.canvasOverlay = null;
     this.dataBuffer = [];
 
     this.isInitialized = false;

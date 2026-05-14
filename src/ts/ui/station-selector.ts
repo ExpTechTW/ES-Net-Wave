@@ -8,6 +8,8 @@ class StationSelector {
   private isExpanded: boolean = false;
   private stationListCreated: boolean = false; // Track if DOM has been created
   private eventDelegationHandler: ((event: Event) => void) | null = null;
+  private previousSelectedStationId: string | null = null; // Store previous station for restoration
+  private isUsingCustomStation: boolean = false; // Track if currently using custom station
 
   // Initialize the station selector
   async initialize() {
@@ -148,6 +150,15 @@ class StationSelector {
       stationList.appendChild(cityStationsContainer);
     });
 
+    // Create custom station input field at the bottom
+    const customInput = document.createElement("input");
+    customInput.id = "custom-station-input";
+    customInput.className = "city-header custom-station-input";
+    customInput.type = "text";
+    customInput.placeholder = "輸入測站 ID";
+    customInput.maxLength = 10;
+    stationList.appendChild(customInput);
+
     // Use event delegation for better memory management
     this.setupEventDelegation();
 
@@ -278,8 +289,14 @@ class StationSelector {
     const stationCard = document.getElementById("card-station");
 
     if (stationSelection && defaultCards) {
+      // Store current selected station before expanding
+      this.previousSelectedStationId = this.getSelectedStation();
+
       // Create station list UI (data is already cached)
       this.createStationList();
+
+      // Setup custom station input handler
+      this.setupCustomStationHandler();
 
       stationSelection.classList.add("show");
       stationSelection.style.display = ""; // Remove inline style
@@ -294,6 +311,7 @@ class StationSelector {
     const stationSelection = document.getElementById("station-selection");
     const defaultCards = document.getElementById("default-cards");
     const stationCard = document.getElementById("card-station");
+    const customInput = document.getElementById("custom-station-input") as HTMLInputElement;
 
     if (stationSelection && defaultCards) {
       stationSelection.classList.remove("show");
@@ -301,12 +319,20 @@ class StationSelector {
       defaultCards.style.display = "flex";
       if (stationCard) stationCard.classList.remove("expanded");
       this.isExpanded = false;
+
+      // Clear custom input
+      if (customInput) {
+        customInput.value = "";
+      }
     }
   }
 
   // Select a station
   selectStation(stationId: string) {
     if (!this.stationManager) return;
+
+    // Clear custom station flag when selecting from list
+    this.isUsingCustomStation = false;
 
     // Update station manager
     this.stationManager.saveSelectedStation(stationId);
@@ -454,6 +480,143 @@ class StationSelector {
   // Get station info
   getStationInfo(stationId: string) {
     return this.stationManager!.getStationInfo(stationId);
+  }
+
+  // Setup custom station input handler
+  setupCustomStationHandler() {
+    const customInput = document.getElementById("custom-station-input") as HTMLInputElement;
+
+    if (!customInput) return;
+
+    // Handle Enter key press only
+    customInput.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        this.handleCustomStationInput(customInput.value);
+      }
+    });
+
+    // Focus the input
+    customInput.focus();
+  }
+
+  // Handle custom station input
+  handleCustomStationInput(stationId: string) {
+    const trimmedId = stationId.trim().toUpperCase();
+
+    if (!trimmedId) {
+      logger.warn("Station ID cannot be empty");
+      return;
+    }
+
+    // Validate station ID format (e.g., 17E83F8)
+    if (!/^[A-Z0-9]{7,10}$/.test(trimmedId)) {
+      logger.warn("Invalid station ID format");
+      return;
+    }
+
+    // Switch to custom station without saving to storage
+    this.switchToCustomStation(trimmedId);
+  }
+
+  // Switch to custom station (temporary, not saved to storage)
+  switchToCustomStation(stationId: string) {
+    // Update UI immediately (use custom station ID format)
+    const stationElement = document.getElementById("val-station");
+    if (stationElement) {
+      stationElement.textContent = `E-${stationId}`;
+    }
+
+    // Clear area display for custom station
+    const areaElement = document.getElementById("val-area");
+    if (areaElement) {
+      areaElement.textContent = "自訂測站";
+    }
+
+    // Immediately clear waveform when switching stations
+    if (
+      window.waveformVisualizer &&
+      typeof window.waveformVisualizer.clearWaveform === "function"
+    ) {
+      window.waveformVisualizer.clearWaveform();
+    }
+
+    // Reset data display to default values when switching stations
+    if (
+      window.waveformVisualizer &&
+      typeof window.waveformVisualizer.resetDataDisplay === "function"
+    ) {
+      window.waveformVisualizer.resetDataDisplay();
+    }
+
+    // Notify WebSocket service to switch station
+    if (window.wsService && typeof window.wsService.setStation === "function") {
+      window.wsService.setStation(stationId);
+    }
+
+    // Notify waveform visualizer to update current station
+    if (
+      window.waveformVisualizer &&
+      typeof window.waveformVisualizer.setStation === "function"
+    ) {
+      window.waveformVisualizer.setStation(stationId);
+    }
+
+    // Mark that we're using custom station (will be restored when reopening selector)
+    this.isUsingCustomStation = true;
+
+    // Do NOT save to storage - this is a temporary session change
+    if (this.stationManager) {
+      // Temporarily change without saving to persistent storage
+      // This is just for the WebSocket and UI to know the current station
+    }
+
+    // Collapse the selection
+    this.collapseStationSelection();
+
+    // Emit event for other components
+    this.emitStationChange(stationId);
+  }
+
+  // Restore previous station
+  restorePreviousStation() {
+    if (this.previousSelectedStationId) {
+      if (!this.stationManager) return;
+
+      // Update UI
+      this.updateMainStationDisplay(this.previousSelectedStationId);
+
+      // Immediately clear waveform when switching stations
+      if (
+        window.waveformVisualizer &&
+        typeof window.waveformVisualizer.clearWaveform === "function"
+      ) {
+        window.waveformVisualizer.clearWaveform();
+      }
+
+      // Reset data display to default values when switching stations
+      if (
+        window.waveformVisualizer &&
+        typeof window.waveformVisualizer.resetDataDisplay === "function"
+      ) {
+        window.waveformVisualizer.resetDataDisplay();
+      }
+
+      // Notify WebSocket service to switch station
+      if (window.wsService && typeof window.wsService.setStation === "function") {
+        window.wsService.setStation(this.previousSelectedStationId);
+      }
+
+      // Notify waveform visualizer to update current station
+      if (
+        window.waveformVisualizer &&
+        typeof window.waveformVisualizer.setStation === "function"
+      ) {
+        window.waveformVisualizer.setStation(this.previousSelectedStationId);
+      }
+
+      // Emit event for other components
+      this.emitStationChange(this.previousSelectedStationId);
+    }
   }
 
   // Cleanup

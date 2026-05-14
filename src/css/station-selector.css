@@ -183,3 +183,35 @@
   color: #ccc;
   text-align: center;
 }
+
+/* Custom station input styles (integrated with city-header) */
+.custom-station-input {
+  display: block;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px 18px;
+  color: #fff;
+  font-family: "Consolas", monospace;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+  width: 150px;
+  box-sizing: border-box;
+  cursor: text;
+}
+
+.custom-station-input:hover {
+  background: #2a2a2a;
+  border-color: #555;
+}
+
+.custom-station-input:focus {
+  border-color: #00bbff;
+  background: #2a2a2a;
+}
+
+.custom-station-input::placeholder {
+  color: #666;
+}

@@ -16,12 +16,12 @@ class StationManager {
 
     try {
       const response = await fetch(
-        "http://api.core-tyo1.exptech.dev/api/v1/device/list",
+        "https://static.core.exptech.dev/resource/station",
       );
       const csvText = await response.text();
 
       const regionResponse = await fetch(
-        "https://raw.githubusercontent.com/ExpTechTW/TREM-Lite/refs/heads/main/src/resource/data/region.json",
+        "https://static.core.exptech.dev/resource/region",
       );
       this.region = await regionResponse.json();
 

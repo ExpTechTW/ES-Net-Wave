@@ -5,13 +5,7 @@ import DataDisplay from "../ui/data-display";
 import { FilterManager } from "../utils/filter";
 import { parseWebSocketMessage, ParsedMessage } from "../utils/data-parser";
 import ntpNow from "../utils/ntp";
-
-interface DataPoint {
-  t: number;
-  x: number;
-  y: number;
-  z: number;
-}
+import { RingBuffer, DataPoint } from "../utils/ring-buffer";
 
 interface SecondData {
   timestamp: number;
@@ -73,7 +67,7 @@ class SlidingWindowErrorRate {
 
 class WaveformVisualizer {
   private TIME_WINDOW: number = ES.CANVAS.TIME_WINDOW_SECONDS * 1000; // 動態從配置讀取
-  private dataBuffer: DataPoint[] = [];
+  private dataBuffer: RingBuffer; // Changed from DataPoint[] to RingBuffer
   private isInitialized: boolean = false;
   private isConnected: boolean = false;
   private lastDataTime: number = 0;
@@ -84,6 +78,15 @@ class WaveformVisualizer {
   private filterManager: FilterManager = new FilterManager();
   private errorRateWindow: SlidingWindowErrorRate =
     new SlidingWindowErrorRate();
+  private syncRequestTimeout: NodeJS.Timeout | null = null;
+  private isSyncing: boolean = false;
+
+  constructor() {
+    // Pre-allocate RingBuffer based on TIME_WINDOW and sample rate (50 Hz)
+    // Buffer size = (time_window_ms / 20ms_per_sample) + buffer for edge cases
+    const bufferCapacity = Math.ceil((this.TIME_WINDOW / 20) * 1.1);
+    this.dataBuffer = new RingBuffer(bufferCapacity);
+  }
 
   initialize() {
     if (this.isInitialized) {
@@ -114,6 +117,7 @@ class WaveformVisualizer {
     ipcRenderer.removeAllListeners("ws-message");
     ipcRenderer.removeAllListeners("clear-waveform");
     ipcRenderer.removeAllListeners("connection-status");
+    ipcRenderer.removeAllListeners("sync-data");
 
     ipcRenderer.on("ws-message", (event, data) => {
       this.handleWebSocketMessage(data);
@@ -125,6 +129,11 @@ class WaveformVisualizer {
 
     ipcRenderer.on("connection-status", (event, status) => {
       this.updateConnectionStatus(status);
+    });
+
+    // Handle synced historical data from server
+    ipcRenderer.on("sync-data", (event, data) => {
+      this.handleSyncedData(data);
     });
 
     this.statusCheckInterval = setInterval(() => {
@@ -170,10 +179,10 @@ class WaveformVisualizer {
   }
 
   clearWaveform() {
-    this.dataBuffer = [];
+    this.dataBuffer.clear();
     // Reset filter state when clearing waveform
     this.filterManager.resetFilter(this.currentStation);
-    this.renderer.updateWaveformData(this.dataBuffer);
+    this.renderer.updateWaveformData(this.dataBuffer.getAll());
     this.resetStats();
   }
 
@@ -190,7 +199,6 @@ class WaveformVisualizer {
     if (!this.isInitialized) return;
 
     const len = xArr.length;
-    const packetDuration = len * 20; // 20ms per sample
 
     // Apply filtering to each axis with separate filter instances
     const filterX = this.filterManager.getFilter(this.currentStation, "x");
@@ -201,7 +209,7 @@ class WaveformVisualizer {
     const filteredY = yArr.map((y) => filterY.filter(y));
     const filteredZ = zArr.map((z) => filterZ.filter(z));
 
-    // Add data points with timestamps
+    // Add data points to ring buffer - O(1) operations
     for (let i = 0; i < len; i++) {
       const ptTime = timestamp + i * 20;
       this.dataBuffer.push({
@@ -212,11 +220,8 @@ class WaveformVisualizer {
       });
     }
 
-    // Remove old data (keep 2 minutes + buffer)
-    const cutoffTime = ntpNow() - this.TIME_WINDOW - 2000;
-    this.dataBuffer = this.dataBuffer.filter((pt) => pt.t > cutoffTime);
-
-    this.renderer.updateWaveformData(this.dataBuffer);
+    // Get current data from ring buffer and send to renderer
+    this.renderer.updateWaveformData(this.dataBuffer.getAll());
   }
 
   setStation(station: any) {
@@ -229,12 +234,24 @@ class WaveformVisualizer {
     this.isConnected = status === "connected";
     if (this.isConnected) {
       this.lastDataTime = ntpNow();
+
+      // Schedule sync request after 2 seconds of connection
+      if (this.syncRequestTimeout) {
+        clearTimeout(this.syncRequestTimeout);
+      }
+      this.syncRequestTimeout = setTimeout(() => {
+        this.requestDataSync();
+      }, 2000);
     }
 
     this.dataDisplay.updateConnectionStatus(status);
 
     if (status === "disconnected") {
       this.dataDisplay.updateDataStatus(false);
+      if (this.syncRequestTimeout) {
+        clearTimeout(this.syncRequestTimeout);
+        this.syncRequestTimeout = null;
+      }
     }
   }
 
@@ -246,18 +263,78 @@ class WaveformVisualizer {
     }
   }
 
+  /**
+   * Request synced historical data from server
+   * Server should return data covering at least the time window
+   */
+  private requestDataSync() {
+    if (this.isSyncing || !this.isConnected) return;
+
+    this.isSyncing = true;
+
+    // Calculate required time window for sync
+    const timeWindowMs = this.TIME_WINDOW;
+
+    // Send sync request to main process
+    ipcRenderer.invoke("request-data-sync", {
+      station: this.currentStation,
+      timeWindow: timeWindowMs,
+      timestamp: ntpNow(),
+    }).catch((err) => {
+      console.error("Data sync request failed:", err);
+      this.isSyncing = false;
+    });
+  }
+
+  /**
+   * Handle synced historical data from server
+   * Merges with existing real-time data and maintains sorted order
+   */
+  private handleSyncedData(syncedData: any) {
+    if (!syncedData || !syncedData.data || !Array.isArray(syncedData.data)) {
+      console.error("Invalid synced data format");
+      this.isSyncing = false;
+      return;
+    }
+
+    try {
+      // Extract the data points from synced data
+      const historicalPoints = syncedData.data as DataPoint[];
+
+      // Merge historical data with current ring buffer
+      // This handles deduplication and maintains sorted order
+      this.dataBuffer.mergeData(historicalPoints);
+
+      // Update renderer with merged data
+      this.renderer.updateWaveformData(this.dataBuffer.getAll());
+
+      console.log(`Synced ${historicalPoints.length} historical data points`);
+    } catch (err) {
+      console.error("Error processing synced data:", err);
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
   destroy() {
     ipcRenderer.removeAllListeners("ws-message");
     ipcRenderer.removeAllListeners("clear-waveform");
     ipcRenderer.removeAllListeners("connection-status");
+    ipcRenderer.removeAllListeners("sync-data");
 
     if (this.statusCheckInterval) {
       clearInterval(this.statusCheckInterval);
       this.statusCheckInterval = null;
     }
 
+    if (this.syncRequestTimeout) {
+      clearTimeout(this.syncRequestTimeout);
+      this.syncRequestTimeout = null;
+    }
+
     this.renderer.destroy();
     this.dataDisplay.destroy();
+    this.dataBuffer.clear();
     this.isInitialized = false;
   }
 }

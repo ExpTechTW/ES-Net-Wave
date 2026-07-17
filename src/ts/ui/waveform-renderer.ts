@@ -192,13 +192,13 @@ class WaveformRenderer {
       // Frequency axis depends on the true sample spacing; measure it from the
       // data rather than assuming a rate (delivery is ~100 Hz, not 50 Hz).
       const fs = this.estimateSampleRate();
-      // Each axis panel shows its own spectrogram; the overlay shows the
-      // 3-component total power (matching the reference GUI).
+      // Each axis panel shows its own spectrogram; the ALL panel shows the
+      // 3-axis composite PGA magnitude (black background, white line).
       this.drawSpectrogramPanel(this.ctxX, [xs], leftEdgeTime, width, height, fs);
       this.drawSpectrogramPanel(this.ctxY, [ys], leftEdgeTime, width, height, fs);
       this.drawSpectrogramPanel(this.ctxZ, [zs], leftEdgeTime, width, height, fs);
       if (this.ctxOverlay) {
-        this.drawSpectrogramPanel(this.ctxOverlay, [xs, ys, zs], leftEdgeTime, width, height, fs);
+        this.drawPgaPanel(this.ctxOverlay, leftEdgeTime, width, height, fs);
       }
     } else {
       // Draw each axis (scales are updated separately)
@@ -483,6 +483,94 @@ class WaveformRenderer {
     ctx.drawImage(scratch, 0, 0, spec.nCols, spec.nBins, x0, 0, drawW, height);
 
     this.drawSpecBandLines(ctx, width, height, spec.topHz);
+    this.drawSpecFrame(ctx, width, height);
+  }
+
+  // ALL panel in spectrogram mode: the 3-axis composite PGA magnitude
+  // sqrt(x^2+y^2+z^2) of the filtered axes, on black. Draws the instantaneous
+  // magnitude (white), a moving average (amber) and the window peak (red line).
+  private drawPgaPanel(
+    ctx: CanvasRenderingContext2D,
+    leftEdgeTime: number,
+    width: number,
+    height: number,
+    fs: number,
+  ) {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, width, height);
+
+    const n = this.dataBuffer.length;
+    const xScale = width / this.TIME_WINDOW;
+
+    // Composite magnitude per sample, and the window peak for scaling.
+    const mags = new Float64Array(n);
+    let maxMag = 0;
+    for (let i = 0; i < n; i++) {
+      const p = this.dataBuffer[i];
+      const m = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+      mags[i] = m;
+      if (p.t >= leftEdgeTime && m > maxMag) maxMag = m;
+    }
+    const yScale = maxMag > 0 ? (height * 0.9) / maxMag : 0;
+    const yOf = (m: number) => height - m * yScale;
+
+    // Trailing moving average over ~1 s.
+    const win = Math.max(1, Math.round(fs * 1.0));
+    const ma = new Float64Array(n);
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      sum += mags[i];
+      if (i >= win) sum -= mags[i - win];
+      ma[i] = sum / Math.min(i + 1, win);
+    }
+
+    // Instantaneous magnitude (white) then moving average (amber).
+    const drawSeries = (
+      value: Float64Array,
+      color: string,
+      lineWidth: number,
+    ) => {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      let started = false;
+      for (let i = 0; i < n; i++) {
+        const x = (this.dataBuffer[i].t - leftEdgeTime) * xScale;
+        const y = yOf(value[i]);
+        if (x < -10 && !started) continue;
+        if (!started) {
+          ctx.moveTo(x, y);
+          started = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
+        if (x > width) break;
+      }
+      ctx.stroke();
+    };
+    drawSeries(mags, "#ffffff", 1);
+    drawSeries(ma, "#ffb300", 1.5);
+
+    // Peak line (red) at the window maximum, with its value.
+    if (maxMag > 0) {
+      const y = yOf(maxMag);
+      ctx.save();
+      ctx.strokeStyle = "#ff5252";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#ff5252";
+      ctx.font = "10px 'Segoe UI', Roboto, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`peak ${maxMag.toFixed(2)}`, width - 4, Math.max(10, y - 2));
+    }
+
     this.drawSpecFrame(ctx, width, height);
   }
 

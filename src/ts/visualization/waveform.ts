@@ -81,9 +81,14 @@ class WaveformVisualizer {
   private syncRequestTimeout: NodeJS.Timeout | null = null;
   private isSyncing: boolean = false;
 
+  // Debug: measure the real sample rate from incoming sensor packets.
+  private lastSensorTs: number | null = null;
+
   constructor() {
-    // Pre-allocate RingBuffer based on TIME_WINDOW and sample rate (50 Hz)
-    // Buffer size = (time_window_ms / 20ms_per_sample) + buffer for edge cases
+    // Pre-allocate the RingBuffer to cover the full TIME_WINDOW at 50 Hz
+    // (20 ms per sample), plus 10% headroom for timing jitter. Duplicate
+    // packets are dropped in pushData, so this density is now correct and
+    // history reaches the full window. Old points outside it are not drawn.
     const bufferCapacity = Math.ceil((this.TIME_WINDOW / 20) * 1.1);
     this.dataBuffer = new RingBuffer(bufferCapacity);
   }
@@ -198,6 +203,13 @@ class WaveformVisualizer {
   pushData(xArr: number[], yArr: number[], zArr: number[], timestamp: number) {
     if (!this.isInitialized) return;
 
+    // The feed delivers each packet twice with an identical timestamp. Pushing
+    // the duplicate doubles the buffer density (history capped at ~T65) and
+    // corrupts the spectrogram (every block replayed -> broadband energy), so
+    // drop any packet whose timestamp matches the previous one.
+    if (timestamp === this.lastSensorTs) return;
+    this.lastSensorTs = timestamp;
+
     const len = xArr.length;
 
     // Apply filtering to each axis with separate filter instances
@@ -205,18 +217,13 @@ class WaveformVisualizer {
     const filterY = this.filterManager.getFilter(this.currentStation, "y");
     const filterZ = this.filterManager.getFilter(this.currentStation, "z");
 
-    const filteredX = xArr.map((x) => filterX.filter(x));
-    const filteredY = yArr.map((y) => filterY.filter(y));
-    const filteredZ = zArr.map((z) => filterZ.filter(z));
-
-    // Add data points to ring buffer - O(1) operations
+    // Filter and push in a single pass - O(1) per point, no temp arrays
     for (let i = 0; i < len; i++) {
-      const ptTime = timestamp + i * 20;
       this.dataBuffer.push({
-        t: ptTime,
-        x: filteredX[i],
-        y: filteredY[i],
-        z: filteredZ[i],
+        t: timestamp + i * 20,
+        x: filterX.filter(xArr[i]),
+        y: filterY.filter(yArr[i]),
+        z: filterZ.filter(zArr[i]),
       });
     }
 

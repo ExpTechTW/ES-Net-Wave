@@ -3,6 +3,12 @@
 import { ES } from "../constants";
 import { logger } from "../utils/logger";
 import ntpNow from "../utils/ntp";
+import {
+  SPEC,
+  computeSpectrogram,
+  infernoLut,
+  SpectrogramResult,
+} from "../utils/spectrogram";
 
 interface DataPoint {
   t: number;
@@ -10,6 +16,11 @@ interface DataPoint {
   y: number;
   z: number;
 }
+
+// Data is streamed at 50 Hz (20 ms per sample); used for spectrogram frequencies.
+const SAMPLE_RATE_HZ = 50;
+
+type ViewMode = "waveform" | "spectrogram";
 
 class WaveformRenderer {
   private ctxX: CanvasRenderingContext2D | null = null;
@@ -37,6 +48,12 @@ class WaveformRenderer {
   private waveformUpdateInterval: number =
     ES.CANVAS.WAVEFORM_UPDATE_INTERVAL_SECONDS * 1000;
   private dataBuffer: DataPoint[] = [];
+
+  // Right-click toggles between the waveform view and the spectrogram (時頻圖).
+  private mode: ViewMode = "waveform";
+  // Offscreen canvas holding one spectrogram at column/bin resolution, then
+  // stretched onto the panel — avoids thousands of per-cell fillRects.
+  private specScratch: HTMLCanvasElement | null = null;
 
   constructor() {
     // Constructor is empty as properties are initialized above
@@ -68,6 +85,11 @@ class WaveformRenderer {
       const chartArea = document.getElementById("chart-area");
       if (chartArea) {
         resizeObserver.observe(chartArea);
+        // Right-click toggles waveform <-> spectrogram view.
+        chartArea.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          this.toggleMode();
+        });
       }
 
       this.isInitialized = true;
@@ -161,43 +183,43 @@ class WaveformRenderer {
 
     // Define time window: [now - 120s] to [now]
     const now = ntpNow();
-    const rightEdgeTime = now;
     const leftEdgeTime = now - this.TIME_WINDOW;
 
-    // Draw each axis (scales are updated separately)
-    this.drawAxis(
-      this.ctxX,
-      this.canvasX,
-      "x",
-      ES.COLORS.WAVE_X,
-      leftEdgeTime,
-      width,
-      height,
-      this.currentScaleX,
-    );
-    this.drawAxis(
-      this.ctxY,
-      this.canvasY,
-      "y",
-      ES.COLORS.WAVE_Y,
-      leftEdgeTime,
-      width,
-      height,
-      this.currentScaleY,
-    );
-    this.drawAxis(
-      this.ctxZ,
-      this.canvasZ,
-      "z",
-      ES.COLORS.WAVE_Z,
-      leftEdgeTime,
-      width,
-      height,
-      this.currentScaleZ,
-    );
+    if (this.mode === "spectrogram") {
+      const xs = this.dataBuffer.map((p) => p.x);
+      const ys = this.dataBuffer.map((p) => p.y);
+      const zs = this.dataBuffer.map((p) => p.z);
+      // Frequency axis depends on the true sample spacing; measure it from the
+      // data rather than assuming a rate (delivery is ~100 Hz, not 50 Hz).
+      const fs = this.estimateSampleRate();
+      // Each axis panel shows its own spectrogram; the overlay shows the
+      // 3-component total power (matching the reference GUI).
+      this.drawSpectrogramPanel(this.ctxX, [xs], leftEdgeTime, width, height, fs);
+      this.drawSpectrogramPanel(this.ctxY, [ys], leftEdgeTime, width, height, fs);
+      this.drawSpectrogramPanel(this.ctxZ, [zs], leftEdgeTime, width, height, fs);
+      if (this.ctxOverlay) {
+        this.drawSpectrogramPanel(this.ctxOverlay, [xs, ys, zs], leftEdgeTime, width, height, fs);
+      }
+    } else {
+      // Draw each axis (scales are updated separately)
+      this.drawAxis(this.ctxX, "x", ES.COLORS.WAVE_X, leftEdgeTime, width, height, this.currentScaleX);
+      this.drawAxis(this.ctxY, "y", ES.COLORS.WAVE_Y, leftEdgeTime, width, height, this.currentScaleY);
+      this.drawAxis(this.ctxZ, "z", ES.COLORS.WAVE_Z, leftEdgeTime, width, height, this.currentScaleZ);
+      this.drawOverlayWaveform(leftEdgeTime, width, height);
+    }
 
-    // Draw overlay waveform
-    this.drawOverlayWaveform(leftEdgeTime, width, height);
+    // Time axis (T0 ~ T{window}s) along the bottom (Z) panel, both modes.
+    this.drawTimeAxis(this.ctxZ, width, height);
+  }
+
+  // Toggle between waveform and spectrogram views (right-click).
+  toggleMode() {
+    this.mode = this.mode === "waveform" ? "spectrogram" : "waveform";
+    if (this.mode === "waveform") {
+      this.computeTargetScales(ntpNow() - this.TIME_WINDOW);
+      this.updateScales();
+    }
+    this.drawWaveforms();
   }
 
   // Reset scales to default when switching stations
@@ -212,39 +234,12 @@ class WaveformRenderer {
     this.targetScaleOverlay = ES.CANVAS.DEFAULT_SCALE;
   }
 
-  // Update scales every frame for smooth scaling
+  // Update scales (縮放即時跟隨目標值，無平滑衰減)
   updateScales() {
-    // Smooth decay for each scale with different speeds
-    this.updateSingleScale("x");
-    this.updateSingleScale("y");
-    this.updateSingleScale("z");
-    this.updateSingleScale("overlay");
-  }
-
-  private updateSingleScale(axis: "x" | "y" | "z" | "overlay") {
-    const currentScale =
-      axis === "x"
-        ? this.currentScaleX
-        : axis === "y"
-          ? this.currentScaleY
-          : axis === "z"
-            ? this.currentScaleZ
-            : this.currentScaleOverlay;
-    const targetScale =
-      axis === "x"
-        ? this.targetScaleX
-        : axis === "y"
-          ? this.targetScaleY
-          : axis === "z"
-            ? this.targetScaleZ
-            : this.targetScaleOverlay;
-
-    // 即時調整縮放，跟有地震時一樣（顛倒的概念：縮小也即時）
-    const newScale = targetScale;
-    if (axis === "x") this.currentScaleX = newScale;
-    else if (axis === "y") this.currentScaleY = newScale;
-    else if (axis === "z") this.currentScaleZ = newScale;
-    else this.currentScaleOverlay = newScale;
+    this.currentScaleX = this.targetScaleX;
+    this.currentScaleY = this.targetScaleY;
+    this.currentScaleZ = this.targetScaleZ;
+    this.currentScaleOverlay = this.targetScaleOverlay;
   }
 
   // Compute target scales (only calculate, no decay)
@@ -254,67 +249,81 @@ class WaveformRenderer {
       maxZ = 0;
 
     for (let i = 0; i < this.dataBuffer.length; i++) {
-      let pt = this.dataBuffer[i];
+      const pt = this.dataBuffer[i];
       if (pt.t >= leftEdgeTime) {
-        maxX = Math.max(maxX, Math.abs(pt.x));
-        maxY = Math.max(maxY, Math.abs(pt.y));
-        maxZ = Math.max(maxZ, Math.abs(pt.z));
+        const ax = Math.abs(pt.x);
+        const ay = Math.abs(pt.y);
+        const az = Math.abs(pt.z);
+        if (ax > maxX) maxX = ax;
+        if (ay > maxY) maxY = ay;
+        if (az > maxZ) maxZ = az;
       }
     }
 
-    // 如果沒有數據，使用默認縮放；如果有數據，使用數據的最大值
+    // maxX/Y/Z >= 0，defaultScale 為下限；max(maxN, defaultScale) 即等價於原邏輯
     const defaultScale = ES.CANVAS.DEFAULT_SCALE;
-    this.targetScaleX = Math.max(maxX || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
-    this.targetScaleY = Math.max(maxY || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
-    this.targetScaleZ = Math.max(maxZ || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
-    
+    const ratio = ES.CANVAS.SCALE_BUFFER_RATIO;
+    this.targetScaleX = Math.max(maxX, defaultScale) * ratio;
+    this.targetScaleY = Math.max(maxY, defaultScale) * ratio;
+    this.targetScaleZ = Math.max(maxZ, defaultScale) * ratio;
+
     // Overlay 使用所有軸的綜合最大值
     const maxOverall = Math.max(maxX, maxY, maxZ);
-    this.targetScaleOverlay = Math.max(maxOverall || defaultScale, defaultScale) * ES.CANVAS.SCALE_BUFFER_RATIO;
+    this.targetScaleOverlay = Math.max(maxOverall, defaultScale) * ratio;
   }
 
-  // Draw single axis
-  drawAxis(
+  // Draw the horizontal midline and time grid (shared by all panels)
+  private drawGrid(
     ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement,
+    leftEdgeTime: number,
+    width: number,
+    height: number,
+  ) {
+    const gridMs = ES.CANVAS.GRID_INTERVAL_SECONDS * 1000;
+    const xScale = width / this.TIME_WINDOW;
+    const midY = height / 2;
+    const now = Date.now();
+
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, midY);
+    ctx.lineTo(width, midY);
+
+    for (
+      let gridTime = Math.ceil(leftEdgeTime / gridMs) * gridMs;
+      gridTime < now;
+      gridTime += gridMs
+    ) {
+      const x = (gridTime - leftEdgeTime) * xScale;
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+    }
+    ctx.stroke();
+  }
+
+  // Draw a single trace for the given axis (shared by single/overlay panels)
+  private drawTrace(
+    ctx: CanvasRenderingContext2D,
     axis: "x" | "y" | "z",
     color: string,
     leftEdgeTime: number,
     width: number,
     height: number,
-    scale: number,
+    yScale: number,
   ) {
-    ctx.clearRect(0, 0, width, height);
+    const xScale = width / this.TIME_WINDOW;
+    const midY = height / 2;
 
-    // Draw grid
-    ctx.strokeStyle = "#222";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    ctx.lineTo(width, height / 2);
-
-    let gridTime =
-      Math.ceil(leftEdgeTime / (ES.CANVAS.GRID_INTERVAL_SECONDS * 1000)) *
-      (ES.CANVAS.GRID_INTERVAL_SECONDS * 1000);
-    while (gridTime < Date.now()) {
-      let x = ((gridTime - leftEdgeTime) / this.TIME_WINDOW) * width;
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      gridTime += ES.CANVAS.GRID_INTERVAL_SECONDS * 1000;
-    }
-    ctx.stroke();
-
-    // Draw waveform
     ctx.beginPath();
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
     let started = false;
-    const yScale = scale > 0 ? height / 2 / scale : 0;
 
     for (let i = 0; i < this.dataBuffer.length; i++) {
-      let pt = this.dataBuffer[i];
-      let x = ((pt.t - leftEdgeTime) / this.TIME_WINDOW) * width;
-      let y = height / 2 - pt[axis] * yScale;
+      const pt = this.dataBuffer[i];
+      const x = (pt.t - leftEdgeTime) * xScale;
+      const y = midY - pt[axis] * yScale;
 
       if (x < -10 && !started) continue;
 
@@ -330,65 +339,175 @@ class WaveformRenderer {
     ctx.stroke();
   }
 
+  // Draw single axis
+  drawAxis(
+    ctx: CanvasRenderingContext2D,
+    axis: "x" | "y" | "z",
+    color: string,
+    leftEdgeTime: number,
+    width: number,
+    height: number,
+    scale: number,
+  ) {
+    ctx.clearRect(0, 0, width, height);
+    this.drawGrid(ctx, leftEdgeTime, width, height);
+
+    const yScale = scale > 0 ? height / 2 / scale : 0;
+    this.drawTrace(ctx, axis, color, leftEdgeTime, width, height, yScale);
+  }
+
   // Draw overlay waveform with all three axes
   drawOverlayWaveform(leftEdgeTime: number, width: number, height: number) {
     if (!this.ctxOverlay || !this.canvasOverlay) return;
 
     const ctx = this.ctxOverlay;
     ctx.clearRect(0, 0, width, height);
-
-    // Draw grid
-    ctx.strokeStyle = "#222";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    ctx.lineTo(width, height / 2);
-
-    let gridTime =
-      Math.ceil(leftEdgeTime / (ES.CANVAS.GRID_INTERVAL_SECONDS * 1000)) *
-      (ES.CANVAS.GRID_INTERVAL_SECONDS * 1000);
-    while (gridTime < Date.now()) {
-      let x = ((gridTime - leftEdgeTime) / this.TIME_WINDOW) * width;
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      gridTime += ES.CANVAS.GRID_INTERVAL_SECONDS * 1000;
-    }
-    ctx.stroke();
+    this.drawGrid(ctx, leftEdgeTime, width, height);
 
     // Use overlay's own scale based on combined maximum of all axes
-    const yScale = this.currentScaleOverlay > 0 ? height / 2 / this.currentScaleOverlay : 0;
+    const yScale =
+      this.currentScaleOverlay > 0 ? height / 2 / this.currentScaleOverlay : 0;
 
     // Draw waveforms in order: X (bottom), Y (middle), Z (top)
-    const axes = [
-      { axis: "x" as const, color: ES.COLORS.WAVE_X },
-      { axis: "y" as const, color: ES.COLORS.WAVE_Y },
-      { axis: "z" as const, color: ES.COLORS.WAVE_Z },
-    ];
+    this.drawTrace(ctx, "x", ES.COLORS.WAVE_X, leftEdgeTime, width, height, yScale);
+    this.drawTrace(ctx, "y", ES.COLORS.WAVE_Y, leftEdgeTime, width, height, yScale);
+    this.drawTrace(ctx, "z", ES.COLORS.WAVE_Z, leftEdgeTime, width, height, yScale);
+  }
 
-    axes.forEach(({ axis, color }) => {
+  // Estimate the sample rate (Hz) from the median gap between consecutive
+  // buffered samples, so the spectrogram frequency axis is correct regardless
+  // of the actual delivery rate. Falls back to SAMPLE_RATE_HZ when unknown.
+  private estimateSampleRate(): number {
+    const n = this.dataBuffer.length;
+    if (n < 2) return SAMPLE_RATE_HZ;
+
+    const dts: number[] = [];
+    const step = Math.max(1, Math.floor(n / 500));
+    for (let i = step; i < n; i += step) {
+      const dt = this.dataBuffer[i].t - this.dataBuffer[i - 1].t;
+      if (dt > 0) dts.push(dt);
+    }
+    if (dts.length === 0) return SAMPLE_RATE_HZ;
+
+    dts.sort((a, b) => a - b);
+    const medianDt = dts[dts.length >> 1];
+    const fs = 1000 / medianDt;
+    return Number.isFinite(fs) ? Math.min(200, Math.max(10, fs)) : SAMPLE_RATE_HZ;
+  }
+
+  // Lazily created/resized offscreen canvas for spectrogram pixels.
+  private getSpecScratch(w: number, h: number): HTMLCanvasElement {
+    if (!this.specScratch) this.specScratch = document.createElement("canvas");
+    if (this.specScratch.width !== w) this.specScratch.width = w;
+    if (this.specScratch.height !== h) this.specScratch.height = h;
+    return this.specScratch;
+  }
+
+  // Draw the 1 Hz / 10 Hz band edges the filter passes (cyan dotted).
+  private drawSpecBandLines(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    topHz: number,
+  ) {
+    ctx.save();
+    ctx.strokeStyle = "#00E5FF";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    for (const hz of [SPEC.BAND_LO_HZ, SPEC.BAND_HI_HZ]) {
+      const y = height * (1 - hz / topHz);
+      if (y < 0 || y > height) continue;
       ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      let started = false;
-
-      for (let i = 0; i < this.dataBuffer.length; i++) {
-        let pt = this.dataBuffer[i];
-        let x = ((pt.t - leftEdgeTime) / this.TIME_WINDOW) * width;
-        let y = height / 2 - pt[axis] * yScale;
-
-        if (x < -10 && !started) continue;
-
-        if (!started) {
-          ctx.moveTo(x, y);
-          started = true;
-        } else {
-          ctx.lineTo(x, y);
-        }
-
-        if (x > width) break;
-      }
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
       ctx.stroke();
-    });
+    }
+    ctx.restore();
+  }
+
+  // Draw one spectrogram panel from one (per-axis) or three (combined) signals.
+  private drawSpectrogramPanel(
+    ctx: CanvasRenderingContext2D,
+    signals: number[][],
+    leftEdgeTime: number,
+    width: number,
+    height: number,
+    fs: number,
+  ) {
+    ctx.clearRect(0, 0, width, height);
+
+    const spec: SpectrogramResult | null = computeSpectrogram(signals, fs);
+    if (!spec || spec.nCols < 2) {
+      this.drawSpecBandLines(ctx, width, height, spec?.topHz ?? SPEC.MAX_DISPLAY_HZ);
+      return;
+    }
+
+    // Render at column x bin resolution, then stretch onto the panel.
+    const scratch = this.getSpecScratch(spec.nCols, spec.nBins);
+    const sctx = scratch.getContext("2d");
+    if (!sctx) return;
+
+    const img = sctx.createImageData(spec.nCols, spec.nBins);
+    const lut = infernoLut();
+    const span = SPEC.DB_HI - SPEC.DB_LO;
+    for (let c = 0; c < spec.nCols; c++) {
+      for (let b = 0; b < spec.nBins; b++) {
+        const rel = spec.rel[c * spec.nBins + b];
+        let idx = Math.round(((rel - SPEC.DB_LO) / span) * 255);
+        if (idx < 0) idx = 0;
+        else if (idx > 255) idx = 255;
+        // Image row 0 = panel top = highest frequency, so flip the bin index.
+        const px = ((spec.nBins - 1 - b) * spec.nCols + c) * 4;
+        img.data[px] = lut[idx * 3];
+        img.data[px + 1] = lut[idx * 3 + 1];
+        img.data[px + 2] = lut[idx * 3 + 2];
+        img.data[px + 3] = 255;
+      }
+    }
+    sctx.putImageData(img, 0, 0);
+
+    // Position the block by the timestamps of its first/last columns.
+    const xScale = width / this.TIME_WINDOW;
+    const tFirst = this.dataBuffer[spec.colEndIdx[0]].t;
+    const tLast = this.dataBuffer[spec.colEndIdx[spec.nCols - 1]].t;
+    const x0 = (tFirst - leftEdgeTime) * xScale;
+    const drawW = Math.max(1, (tLast - leftEdgeTime) * xScale - x0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(scratch, 0, 0, spec.nCols, spec.nBins, x0, 0, drawW, height);
+
+    this.drawSpecBandLines(ctx, width, height, spec.topHz);
+  }
+
+  // Draw the relative time axis: T0 at the right edge (newest = now) to
+  // T{window}s at the left edge (oldest), rendered along the bottom panel.
+  private drawTimeAxis(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+  ) {
+    const windowSec = Math.round(this.TIME_WINDOW / 1000);
+    const ticks = 4;
+    ctx.save();
+    ctx.fillStyle = "#888";
+    ctx.font = "10px 'Segoe UI', Roboto, sans-serif";
+    ctx.textBaseline = "bottom";
+    for (let i = 0; i <= ticks; i++) {
+      const frac = i / ticks;
+      // Newest (now) is at the right edge -> seconds increase leftward.
+      const label = `T${Math.round((1 - frac) * windowSec)}s`;
+      let x = frac * width;
+      if (i === 0) {
+        ctx.textAlign = "left";
+        x += 3;
+      } else if (i === ticks) {
+        ctx.textAlign = "right";
+        x -= 3;
+      } else {
+        ctx.textAlign = "center";
+      }
+      ctx.fillText(label, x, height - 2);
+    }
+    ctx.restore();
   }
 
   // Cleanup

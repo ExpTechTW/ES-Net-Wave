@@ -38,29 +38,27 @@ export class RingBuffer {
   }
 
   /**
-   * Get all valid data points in chronological order
-   * Returns a new array for rendering (read-only from caller perspective)
+   * Get all valid data points in chronological order.
+   * push() always stores a fresh object and never mutates stored points, so
+   * returning references (read-only from caller perspective) is safe and
+   * avoids per-frame object cloning.
    */
   getAll(): DataPoint[] {
     const result: DataPoint[] = new Array(this.validSize);
 
     if (this.validSize < this.capacity) {
-      // Buffer not full yet, just copy from beginning
+      // Buffer not full yet: points sit at [0, validSize)
       for (let i = 0; i < this.validSize; i++) {
-        result[i] = { ...this.buffer[i] };
+        result[i] = this.buffer[i];
       }
     } else {
-      // Buffer is full, copy from writePointer (oldest) to current position
+      // Buffer full: oldest is at writePointer, wrapping around
       let resultIdx = 0;
-
-      // Copy from writePointer to end
       for (let i = this.writePointer; i < this.capacity; i++) {
-        result[resultIdx++] = { ...this.buffer[i] };
+        result[resultIdx++] = this.buffer[i];
       }
-
-      // Copy from beginning to writePointer
       for (let i = 0; i < this.writePointer; i++) {
-        result[resultIdx++] = { ...this.buffer[i] };
+        result[resultIdx++] = this.buffer[i];
       }
     }
 

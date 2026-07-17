@@ -14,6 +14,12 @@ export const SPEC = {
   BAND_LO_HZ: 1.0, // band-pass low edge (highlighted line)
   BAND_HI_HZ: 10.0, // band-pass high edge (highlighted line)
   MAX_DISPLAY_HZ: 15.0, // above ~10 Hz the filter already removed everything
+  // Per-frequency noise floor percentile. The reference GUI subtracts the
+  // median of the quiet PRE-EVENT region; a live stream has no event marker,
+  // so we take a slightly-above-median percentile of each frequency over the
+  // window. That sits just above the ambient noise, pushing its fluctuations
+  // below DB_LO (black) so only real shaking lights up.
+  NOISE_PERCENTILE: 0.8,
 };
 
 export interface SpectrogramResult {
@@ -132,19 +138,16 @@ export function computeSpectrogram(
     }
   }
 
-  // Per-frequency median baseline -> subtract so noise sits at 0 dB.
+  // Per-frequency noise floor -> subtract so ambient noise sits near/below 0 dB.
   const rel = new Float32Array(nCols * nBins);
   const col = new Float64Array(nCols);
+  const pIdx = Math.min(nCols - 1, Math.floor(SPEC.NOISE_PERCENTILE * nCols));
   for (let b = 0; b < nBins; b++) {
     for (let c = 0; c < nCols; c++) col[c] = db[c * nBins + b];
     const sorted = Array.from(col).sort((p, q) => p - q);
-    const mid = sorted.length >> 1;
-    const median =
-      sorted.length % 2
-        ? sorted[mid]
-        : (sorted[mid - 1] + sorted[mid]) / 2;
+    const floor = sorted[pIdx];
     for (let c = 0; c < nCols; c++) {
-      rel[c * nBins + b] = db[c * nBins + b] - median;
+      rel[c * nBins + b] = db[c * nBins + b] - floor;
     }
   }
 

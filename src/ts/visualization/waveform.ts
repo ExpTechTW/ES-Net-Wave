@@ -6,6 +6,7 @@ import { FilterManager } from "../utils/filter";
 import { parseWebSocketMessage, ParsedMessage } from "../utils/data-parser";
 import ntpNow from "../utils/ntp";
 import { RingBuffer, DataPoint } from "../utils/ring-buffer";
+import { TimestampDeduplicator } from "../utils/dedup";
 
 interface SecondData {
   timestamp: number;
@@ -81,8 +82,8 @@ class WaveformVisualizer {
   private syncRequestTimeout: NodeJS.Timeout | null = null;
   private isSyncing: boolean = false;
 
-  // Debug: measure the real sample rate from incoming sensor packets.
-  private lastSensorTs: number | null = null;
+  // Drops duplicate/out-of-order sensor packets (the feed sends each twice).
+  private deduper: TimestampDeduplicator = new TimestampDeduplicator();
 
   constructor() {
     // Pre-allocate the RingBuffer to cover the full TIME_WINDOW at 50 Hz
@@ -187,6 +188,8 @@ class WaveformVisualizer {
     this.dataBuffer.clear();
     // Reset filter state when clearing waveform
     this.filterManager.resetFilter(this.currentStation);
+    // Reset dedup state so a fresh/switched station starts clean
+    this.deduper.reset();
     this.renderer.updateWaveformData(this.dataBuffer.getAll());
     this.resetStats();
   }
@@ -203,12 +206,11 @@ class WaveformVisualizer {
   pushData(xArr: number[], yArr: number[], zArr: number[], timestamp: number) {
     if (!this.isInitialized) return;
 
-    // The feed delivers each packet twice with an identical timestamp. Pushing
-    // the duplicate doubles the buffer density (history capped at ~T65) and
-    // corrupts the spectrogram (every block replayed -> broadband energy), so
-    // drop any packet whose timestamp matches the previous one.
-    if (timestamp === this.lastSensorTs) return;
-    this.lastSensorTs = timestamp;
+    // The feed delivers each packet more than once and not necessarily in
+    // order. A duplicate doubles the buffer density (history capped at ~T65)
+    // and corrupts the spectrogram (every block replayed -> broadband energy),
+    // so drop any timestamp already seen within the sliding window.
+    if (!this.deduper.accept(timestamp)) return;
 
     const len = xArr.length;
 

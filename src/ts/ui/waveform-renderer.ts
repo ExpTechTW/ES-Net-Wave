@@ -403,7 +403,8 @@ class WaveformRenderer {
     return this.specScratch;
   }
 
-  // Draw the 1 Hz / 10 Hz band edges the filter passes (cyan dotted).
+  // Draw the band edges the filter passes: HPF edge (1 Hz) as a faint thin
+  // blue line, LPF edge (10 Hz) as a faint thin red line.
   private drawSpecBandLines(
     ctx: CanvasRenderingContext2D,
     width: number,
@@ -411,12 +412,16 @@ class WaveformRenderer {
     topHz: number,
   ) {
     ctx.save();
-    ctx.strokeStyle = "#00E5FF";
+    ctx.setLineDash([]);
     ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    for (const hz of [SPEC.BAND_LO_HZ, SPEC.BAND_HI_HZ]) {
+    const lines: [number, string][] = [
+      [SPEC.BAND_LO_HZ, "rgba(120,165,255,0.55)"], // HPF edge - faint blue
+      [SPEC.BAND_HI_HZ, "rgba(255,120,120,0.55)"], // LPF edge - faint red
+    ];
+    for (const [hz, color] of lines) {
       const y = height * (1 - hz / topHz);
       if (y < 0 || y > height) continue;
+      ctx.strokeStyle = color;
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
@@ -439,6 +444,7 @@ class WaveformRenderer {
     const spec: SpectrogramResult | null = computeSpectrogram(signals, fs);
     if (!spec || spec.nCols < 2) {
       this.drawSpecBandLines(ctx, width, height, spec?.topHz ?? SPEC.MAX_DISPLAY_HZ);
+      this.drawSpecFrame(ctx, width, height);
       return;
     }
 
@@ -472,10 +478,26 @@ class WaveformRenderer {
     const tLast = this.dataBuffer[spec.colEndIdx[spec.nCols - 1]].t;
     const x0 = (tFirst - leftEdgeTime) * xScale;
     const drawW = Math.max(1, (tLast - leftEdgeTime) * xScale - x0);
-    ctx.imageSmoothingEnabled = true;
+    // Nearest-neighbour: keep cells crisp instead of blurring the STFT bins.
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(scratch, 0, 0, spec.nCols, spec.nBins, x0, 0, drawW, height);
 
     this.drawSpecBandLines(ctx, width, height, spec.topHz);
+    this.drawSpecFrame(ctx, width, height);
+  }
+
+  // White frame around a spectrogram channel.
+  private drawSpecFrame(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+  ) {
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
+    ctx.restore();
   }
 
   // Draw the relative time axis: T0 at the right edge (newest = now) to
